@@ -15,9 +15,9 @@ This is a simple Flutter application developed as part of Week 1 for the Flutter
 1.  Make sure you have Flutter installed and set up on your machine.
 2.  Clone the repository.
 3.  Open the project in Android Studio or VS Code.
-4.  Run lutter pub get to fetch dependencies.
+4.  Run flutter pub get to fetch dependencies.
 5.  Connect a device or start an emulator/simulator.
-6.  Run lutter run to launch the application.
+6.  Run flutter run to launch the application.
 
 ## Learning Objectives Addressed
 *   Understand Flutter's basic structure.
