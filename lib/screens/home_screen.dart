@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:to_do_list/utils/colors.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -6,8 +7,11 @@ class HomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.babyBlue.withValues(alpha: 0.3),
       appBar: AppBar(
         title: const Text('Home Screen'),
+        backgroundColor: AppColors.lavender,
+        foregroundColor: Colors.white,
         automaticallyImplyLeading: false,
       ),
       body: Center(
@@ -23,6 +27,10 @@ class HomeScreen extends StatelessWidget {
               onPressed: () {
                 Navigator.pop(context);
               },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.peach,
+                foregroundColor: AppColors.darkLavender,
+              ),
               child: const Text('Log Out'),
             ),
           ],

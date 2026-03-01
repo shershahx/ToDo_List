@@ -1,34 +1,49 @@
 import 'package:flutter/material.dart';
-import 'package:to_do_list/screens/home_screen.dart';
-import 'package:to_do_list/screens/signup_screen.dart';
+import 'package:to_do_list/screens/login_screen.dart';
 import 'package:to_do_list/utils/colors.dart';
 import 'package:to_do_list/utils/validators.dart';
 
-class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key});
+class SignUpScreen extends StatefulWidget {
+  const SignUpScreen({super.key});
 
   @override
-  State<LoginScreen> createState() => _LoginScreenState();
+  State<SignUpScreen> createState() => _SignUpScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen> {
+class _SignUpScreenState extends State<SignUpScreen> {
   final _formKey = GlobalKey<FormState>();
+
+  final _nameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _confirmPasswordController = TextEditingController();
   bool _obscurePassword = true;
+  bool _obscureConfirm = true;
 
   @override
   void dispose() {
+    _nameController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
+    _confirmPasswordController.dispose();
     super.dispose();
   }
 
-  void _handleLogin() {
+  void _handleSignUp() {
     if (_formKey.currentState!.validate()) {
-      Navigator.push(
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Account created successfully!'),
+          backgroundColor: AppColors.success,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
+        ),
+      );
+      Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => const HomeScreen()),
+        MaterialPageRoute(builder: (context) => const LoginScreen()),
       );
     }
   }
@@ -36,6 +51,9 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        title: const Text('Create Account'),
+      ),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 28.0),
@@ -44,45 +62,57 @@ class _LoginScreenState extends State<LoginScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const SizedBox(height: 60.0),
+                const SizedBox(height: 20.0),
 
-                // App icon / branding
                 Container(
-                  width: 90,
-                  height: 90,
+                  width: 80,
+                  height: 80,
                   decoration: BoxDecoration(
-                    color: AppColors.primary.withValues(alpha: 0.15),
+                    color: AppColors.accent.withValues(alpha: 0.15),
                     shape: BoxShape.circle,
                   ),
                   child: const Icon(
-                    Icons.check_circle_outline_rounded,
-                    size: 50,
-                    color: AppColors.primary,
+                    Icons.person_add_alt_1_rounded,
+                    size: 42,
+                    color: AppColors.accent,
                   ),
                 ),
-                const SizedBox(height: 28.0),
+                const SizedBox(height: 20.0),
 
                 const Text(
-                  'Welcome Back',
+                  'Get Started',
                   style: TextStyle(
-                    fontSize: 28,
+                    fontSize: 26,
                     fontWeight: FontWeight.bold,
                     color: AppColors.textPrimary,
                   ),
                   textAlign: TextAlign.center,
                 ),
-                const SizedBox(height: 8.0),
+                const SizedBox(height: 6.0),
                 const Text(
-                  'Sign in to continue',
+                  'Create an account to continue',
                   style: TextStyle(
-                    fontSize: 15,
+                    fontSize: 14,
                     color: AppColors.textSecondary,
                   ),
                   textAlign: TextAlign.center,
                 ),
-                const SizedBox(height: 40.0),
+                const SizedBox(height: 30.0),
 
-                // Email field
+                // Name
+                TextFormField(
+                  controller: _nameController,
+                  style: const TextStyle(color: AppColors.textPrimary),
+                  decoration: const InputDecoration(
+                    labelText: 'Full Name',
+                    hintText: 'John Doe',
+                    prefixIcon: Icon(Icons.person_outline),
+                  ),
+                  validator: FormValidators.validateName,
+                ),
+                const SizedBox(height: 14.0),
+
+                // Email
                 TextFormField(
                   controller: _emailController,
                   keyboardType: TextInputType.emailAddress,
@@ -94,16 +124,16 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   validator: FormValidators.validateEmail,
                 ),
-                const SizedBox(height: 16.0),
+                const SizedBox(height: 14.0),
 
-                // Password field with visibility toggle
+                // Password
                 TextFormField(
                   controller: _passwordController,
                   obscureText: _obscurePassword,
                   style: const TextStyle(color: AppColors.textPrimary),
                   decoration: InputDecoration(
                     labelText: 'Password',
-                    hintText: 'Enter your password',
+                    hintText: 'At least 6 characters',
                     prefixIcon: const Icon(Icons.lock_outline),
                     suffixIcon: IconButton(
                       icon: Icon(
@@ -121,29 +151,40 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   validator: FormValidators.validatePassword,
                 ),
-                const SizedBox(height: 10.0),
+                const SizedBox(height: 14.0),
 
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: GestureDetector(
-                    onTap: () {
-                      // TODO: Implement forgot password
-                    },
-                    child: const Text(
-                      'Forgot Password?',
-                      style: TextStyle(
-                        color: AppColors.accent,
-                        fontWeight: FontWeight.w600,
-                        fontSize: 13,
+                // Confirm password
+                TextFormField(
+                  controller: _confirmPasswordController,
+                  obscureText: _obscureConfirm,
+                  style: const TextStyle(color: AppColors.textPrimary),
+                  decoration: InputDecoration(
+                    labelText: 'Confirm Password',
+                    hintText: 'Re-enter your password',
+                    prefixIcon: const Icon(Icons.lock_outline),
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        _obscureConfirm
+                            ? Icons.visibility_off_outlined
+                            : Icons.visibility_outlined,
+                        color: AppColors.textSecondary,
                       ),
+                      onPressed: () {
+                        setState(() {
+                          _obscureConfirm = !_obscureConfirm;
+                        });
+                      },
                     ),
+                  ),
+                  validator: (value) => FormValidators.validateConfirmPassword(
+                    value,
+                    _passwordController.text,
                   ),
                 ),
                 const SizedBox(height: 28.0),
 
-                // Login button
                 ElevatedButton(
-                  onPressed: _handleLogin,
+                  onPressed: _handleSignUp,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primary,
                     foregroundColor: Colors.white,
@@ -156,28 +197,23 @@ class _LoginScreenState extends State<LoginScreen> {
                       fontWeight: FontWeight.w600,
                     ),
                   ),
-                  child: const Text('Login'),
+                  child: const Text('Sign Up'),
                 ),
-                const SizedBox(height: 24.0),
+                const SizedBox(height: 20.0),
 
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     const Text(
-                      "Don't have an account? ",
+                      'Already have an account? ',
                       style: TextStyle(color: AppColors.textSecondary),
                     ),
                     GestureDetector(
                       onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const SignUpScreen(),
-                          ),
-                        );
+                        Navigator.pop(context);
                       },
                       child: const Text(
-                        'Sign Up',
+                        'Login',
                         style: TextStyle(
                           color: AppColors.accent,
                           fontWeight: FontWeight.bold,
@@ -186,6 +222,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ],
                 ),
+                const SizedBox(height: 20.0),
               ],
             ),
           ),
