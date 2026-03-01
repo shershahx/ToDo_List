@@ -105,7 +105,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   style: const TextStyle(color: AppColors.textPrimary),
                   decoration: const InputDecoration(
                     labelText: 'Full Name',
-                    hintText: 'John Doe',
+                    hintText: 'Your Name',
                     prefixIcon: Icon(Icons.person_outline),
                   ),
                   validator: FormValidators.validateName,
