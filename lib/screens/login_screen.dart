@@ -17,11 +17,23 @@ class _LoginScreenState extends State<LoginScreen> {
   final _passwordController = TextEditingController();
   bool _obscurePassword = true;
 
+  // Demo credentials — for quick testing without creating an account
+  static const String _demoEmail = 'demo@todoapp.com';
+  static const String _demoPassword = 'Demo@1234';
+
   @override
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
+  }
+
+  void _fillDemoAccount() {
+    setState(() {
+      _emailController.text = _demoEmail;
+      _passwordController.text = _demoPassword;
+      _obscurePassword = false;
+    });
   }
 
   void _handleLogin() {
@@ -157,6 +169,26 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ),
                   child: const Text('Login'),
+                ),
+                const SizedBox(height: 12.0),
+
+                // Quick-fill demo account for reviewers / testers
+                OutlinedButton.icon(
+                  onPressed: _fillDemoAccount,
+                  icon: const Icon(Icons.bolt_rounded, size: 18),
+                  label: const Text('Use Demo Account'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppColors.accent,
+                    side: const BorderSide(color: AppColors.accent, width: 1.2),
+                    padding: const EdgeInsets.symmetric(vertical: 14.0),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12.0),
+                    ),
+                    textStyle: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
                 ),
                 const SizedBox(height: 24.0),
 

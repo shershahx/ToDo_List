@@ -17,6 +17,7 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         brightness: Brightness.dark,
+        fontFamily: 'Roboto',
         scaffoldBackgroundColor: AppColors.background,
         colorScheme: ColorScheme.dark(
           primary: AppColors.primary,

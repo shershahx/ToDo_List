@@ -11,4 +11,5 @@ class AppColors {
   static const Color textSecondary = Color(0xFF94A3B8); // Muted text
   static const Color error = Color(0xFFEF4444);        // Red for errors
   static const Color inputFill = Color(0xFF1E293B);    // Same as card for inputs
+  static const Color skyBlue = Color(0xFF60A5FA);      // Blue for sign-up accents
 }

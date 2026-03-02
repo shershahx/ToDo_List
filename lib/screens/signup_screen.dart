@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:to_do_list/screens/login_screen.dart';
 import 'package:to_do_list/utils/colors.dart';
 import 'package:to_do_list/utils/validators.dart';
@@ -68,13 +69,13 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   width: 80,
                   height: 80,
                   decoration: BoxDecoration(
-                    color: AppColors.accent.withValues(alpha: 0.15),
+                    color: AppColors.skyBlue.withValues(alpha: 0.15),
                     shape: BoxShape.circle,
                   ),
                   child: const Icon(
                     Icons.person_add_alt_1_rounded,
                     size: 42,
-                    color: AppColors.accent,
+                    color: AppColors.skyBlue,
                   ),
                 ),
                 const SizedBox(height: 20.0),
@@ -99,10 +100,13 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 ),
                 const SizedBox(height: 30.0),
 
-                // Name
+                // Name — only letters and spaces allowed at keyboard level too
                 TextFormField(
                   controller: _nameController,
                   style: const TextStyle(color: AppColors.textPrimary),
+                  inputFormatters: [
+                    FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z ]')),
+                  ],
                   decoration: const InputDecoration(
                     labelText: 'Full Name',
                     hintText: 'Your Name',
@@ -153,7 +157,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 ),
                 const SizedBox(height: 14.0),
 
-                // Confirm password
+                // confirm password
                 TextFormField(
                   controller: _confirmPasswordController,
                   obscureText: _obscureConfirm,
@@ -215,7 +219,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       child: const Text(
                         'Login',
                         style: TextStyle(
-                          color: Color.fromARGB(255, 34, 156, 238),
+                          color: AppColors.skyBlue,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
