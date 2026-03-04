@@ -170,26 +170,6 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   child: const Text('Login'),
                 ),
-                const SizedBox(height: 12.0),
-
-                // quick-fill demo account for reviewers / testers
-                OutlinedButton.icon(
-                  onPressed: _fillDemoAccount,
-                  icon: const Icon(Icons.bolt_rounded, size: 18),
-                  label: const Text('Use Demo Account'),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: AppColors.accent,
-                    side: const BorderSide(color: AppColors.accent, width: 1.2),
-                    padding: const EdgeInsets.symmetric(vertical: 14.0),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12.0),
-                    ),
-                    textStyle: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ),
                 const SizedBox(height: 24.0),
 
                 Row(
