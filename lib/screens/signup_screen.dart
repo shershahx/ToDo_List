@@ -100,7 +100,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 ),
                 const SizedBox(height: 30.0),
 
-                // Name — only letters and spaces allowed at keyboard level too
+                // name — only letters and spaces allowed at keyboard level too
                 TextFormField(
                   controller: _nameController,
                   style: const TextStyle(color: AppColors.textPrimary),
@@ -116,7 +116,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 ),
                 const SizedBox(height: 14.0),
 
-                // Email
+                // email
                 TextFormField(
                   controller: _emailController,
                   keyboardType: TextInputType.emailAddress,
@@ -130,7 +130,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 ),
                 const SizedBox(height: 14.0),
 
-                // Password
+                // password
                 TextFormField(
                   controller: _passwordController,
                   obscureText: _obscurePassword,

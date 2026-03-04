@@ -17,7 +17,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final _passwordController = TextEditingController();
   bool _obscurePassword = true;
 
-  // Demo credentials — for quick testing without creating an account
+  // demo credentials — for quick testing without creating an account
   static const String _demoEmail = 'demo@todoapp.com';
   static const String _demoPassword = 'Demo@1234';
 
@@ -58,7 +58,7 @@ class _LoginScreenState extends State<LoginScreen> {
               children: [
                 const SizedBox(height: 60.0),
 
-                // App icon / branding
+                // app icon 
                 Container(
                   width: 90,
                   height: 90,
@@ -94,7 +94,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 const SizedBox(height: 40.0),
 
-                // Email field
+                // email field
                 TextFormField(
                   controller: _emailController,
                   keyboardType: TextInputType.emailAddress,
@@ -108,7 +108,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 const SizedBox(height: 16.0),
 
-                // Password field with visibility toggle
+                // password field
                 TextFormField(
                   controller: _passwordController,
                   obscureText: _obscurePassword,
@@ -153,7 +153,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 const SizedBox(height: 28.0),
 
-                // Login button
+                // login button
                 ElevatedButton(
                   onPressed: _handleLogin,
                   style: ElevatedButton.styleFrom(
@@ -172,7 +172,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 const SizedBox(height: 12.0),
 
-                // Quick-fill demo account for reviewers / testers
+                // quick-fill demo account for reviewers / testers
                 OutlinedButton.icon(
                   onPressed: _fillDemoAccount,
                   icon: const Icon(Icons.bolt_rounded, size: 18),

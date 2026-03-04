@@ -26,7 +26,9 @@ class FormValidators {
       return 'Please enter a valid email address';
     }
 
-    final emailRegex = RegExp(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$');
+    final emailRegex = RegExp(
+      r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$',
+    );
     if (!emailRegex.hasMatch(trimmed)) {
       return 'Please enter a valid email address';
     }
@@ -56,7 +58,7 @@ class FormValidators {
     return null;
   }
 
-  // Only allows letters and spaces — no numbers or symbols
+  // only allows letters and spaces — no numbers or symbols
   static String? validateName(String? value) {
     if (value == null || value.trim().isEmpty) {
       return 'Please enter your name';
