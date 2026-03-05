@@ -38,10 +38,23 @@ class _LoginScreenState extends State<LoginScreen> {
 
   void _handleLogin() {
     if (_formKey.currentState!.validate()) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => const HomeScreen()),
-      );
+      final email = _emailController.text.trim();
+      final password = _passwordController.text;
+
+      // Check credentials against the demo account
+      if (email == _demoEmail && password == _demoPassword) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const HomeScreen()),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Invalid email or password'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
     }
   }
 
@@ -131,7 +144,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       },
                     ),
                   ),
-                  validator: FormValidators.validatePassword,
+                  validator: FormValidators.validateLoginPassword,
                 ),
                 const SizedBox(height: 10.0),
 

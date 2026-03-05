@@ -58,6 +58,14 @@ class FormValidators {
     return null;
   }
 
+  // Lightweight check for login — just make sure something was typed
+  static String? validateLoginPassword(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'Please enter your password';
+    }
+    return null;
+  }
+
   // only allows letters and spaces — no numbers or symbols
   static String? validateName(String? value) {
     if (value == null || value.trim().isEmpty) {
