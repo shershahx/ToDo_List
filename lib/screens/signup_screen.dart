@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:to_do_list/screens/login_screen.dart';
 import 'package:to_do_list/utils/colors.dart';
+import 'package:to_do_list/utils/user_store.dart';
 import 'package:to_do_list/utils/validators.dart';
 
 class SignUpScreen extends StatefulWidget {
@@ -32,6 +33,23 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
   void _handleSignUp() {
     if (_formKey.currentState!.validate()) {
+      final email = _emailController.text.trim();
+      final password = _passwordController.text;
+
+      // Check if this email is already taken
+      if (UserStore().emailExists(email)) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('An account with this email already exists'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+        return;
+      }
+
+      // Save the new account
+      UserStore().register(email, password);
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: const Text('Account created successfully!'),

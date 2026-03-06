@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:to_do_list/screens/home_screen.dart';
 import 'package:to_do_list/screens/signup_screen.dart';
 import 'package:to_do_list/utils/colors.dart';
+import 'package:to_do_list/utils/user_store.dart';
 import 'package:to_do_list/utils/validators.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -41,8 +42,11 @@ class _LoginScreenState extends State<LoginScreen> {
       final email = _emailController.text.trim();
       final password = _passwordController.text;
 
-      // Check credentials against the demo account
-      if (email == _demoEmail && password == _demoPassword) {
+      // Check against demo account OR any registered user account
+      final isDemoMatch = email == _demoEmail && password == _demoPassword;
+      final isRegisteredUser = UserStore().authenticate(email, password);
+
+      if (isDemoMatch || isRegisteredUser) {
         Navigator.push(
           context,
           MaterialPageRoute(builder: (context) => const HomeScreen()),
