@@ -1,5 +1,5 @@
 ﻿import 'package:flutter/material.dart';
-import 'package:to_do_list/screens/login_screen.dart';
+import 'package:to_do_list/screens/splash_screen.dart';
 import 'package:to_do_list/utils/colors.dart';
 
 void main() {
@@ -59,7 +59,7 @@ class MyApp extends StatelessWidget {
         ),
         useMaterial3: true,
       ),
-      home: const LoginScreen(),
+      home: const SplashScreen(),
     );
   }
 }
