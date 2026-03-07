@@ -49,11 +49,16 @@ dev_dependencies:
   change_app_package_name: ^1.5.0
 
   flutter_launcher_icons: ^0.14.3
+  msix: ^3.16.13
 
-flutter_icons:
+flutter_launcher_icons:
   android: true
   ios: true
-  image_path: "assets/icon/icon.png"  
+  image_path: "assets/icon/icon.png"
+  windows:
+    generate: true
+    image_path: "assets/icon/icon.png"
+    icon_size: 48
   web:
     generate: true
     image_path: "assets/icon/icon.png"

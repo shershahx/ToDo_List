@@ -21,4 +21,11 @@ class UserStore {
   bool emailExists(String email) {
     return _users.containsKey(email.trim().toLowerCase());
   }
+
+  void updatePassword(String email, String newPassword) {
+    final key = email.trim().toLowerCase();
+    if (_users.containsKey(key)) {
+      _users[key] = newPassword;
+    }
+  }
 }

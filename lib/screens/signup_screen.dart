@@ -39,8 +39,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
       // Check if this email is already taken
       if (UserStore().emailExists(email)) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('An account with this email already exists'),
+          SnackBar(
+            content: const Text('An account with this email already exists'),
+            backgroundColor: AppColors.error,
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -69,32 +70,38 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final avatarSize = (screenWidth * 0.18).clamp(56.0, 90.0);
+    final iconSize = avatarSize * 0.52;
     return Scaffold(
       appBar: AppBar(
         title: const Text('Create Account'),
       ),
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 28.0),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                const SizedBox(height: 20.0),
+        child: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 28.0),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 400),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    const SizedBox(height: 20.0),
 
-                Container(
-                  width: 80,
-                  height: 80,
+                    Container(
+                      width: avatarSize,
+                      height: avatarSize,
                   decoration: BoxDecoration(
                     color: AppColors.skyBlue.withValues(alpha: 0.15),
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(
-                    Icons.person_add_alt_1_rounded,
-                    size: 42,
-                    color: AppColors.skyBlue,
-                  ),
+                      child: Icon(
+                        Icons.person_add_alt_1_rounded,
+                        size: iconSize,
+                        color: AppColors.skyBlue,
+                      ),
                 ),
                 const SizedBox(height: 20.0),
 
@@ -230,24 +237,29 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       'Already have an account? ',
                       style: TextStyle(color: AppColors.textSecondary),
                     ),
-                    GestureDetector(
-                      onTap: () {
-                        Navigator.pop(context);
-                      },
-                      child: const Text(
-                        'Login',
-                        style: TextStyle(
-                          color: AppColors.skyBlue,
-                          fontWeight: FontWeight.bold,
+                    MouseRegion(
+                      cursor: SystemMouseCursors.click,
+                      child: GestureDetector(
+                        onTap: () {
+                          Navigator.pop(context);
+                        },
+                        child: const Text(
+                          'Login',
+                          style: TextStyle(
+                            color: AppColors.skyBlue,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ),
                     ),
                   ],
                 ),
                 const SizedBox(height: 20.0),
-              ],
+                ],
+              ),
             ),
           ),
+        ),
         ),
       ),
     );

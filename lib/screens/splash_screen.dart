@@ -24,13 +24,15 @@ class _SplashScreenState extends State<SplashScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
+    final shortSide = MediaQuery.of(context).size.shortestSide;
+    final iconSize = shortSide * 0.28;
+    return Scaffold(
       backgroundColor: AppColors.background,
       body: Center(
         child: Image(
-          image: AssetImage('assets/icon/icon.png'),
-          width: 120,
-          height: 120,
+          image: const AssetImage('assets/icon/icon.png'),
+          width: iconSize.clamp(80.0, 160.0),
+          height: iconSize.clamp(80.0, 160.0),
         ),
       ),
     );
