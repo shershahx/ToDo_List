@@ -2,7 +2,8 @@
 import 'package:to_do_list/screens/splash_screen.dart';
 import 'package:to_do_list/utils/colors.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
   runApp(const MyApp());
 }
 
