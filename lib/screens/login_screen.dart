@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:to_do_list/screens/home_screen.dart';
 import 'package:to_do_list/screens/signup_screen.dart';
 import 'package:to_do_list/utils/colors.dart';
+import 'package:to_do_list/utils/session_manager.dart';
 import 'package:to_do_list/utils/user_store.dart';
 import 'package:to_do_list/utils/validators.dart';
 
@@ -55,7 +56,7 @@ class _LoginScreenState extends State<LoginScreen> {
     });
   }
 
-  void _handleLogin() {
+  Future<void> _handleLogin() async {
     if (_formKey.currentState!.validate()) {
       final email = _emailController.text.trim();
       final password = _passwordController.text;
@@ -65,7 +66,9 @@ class _LoginScreenState extends State<LoginScreen> {
       final isRegisteredUser = UserStore().authenticate(email, password);
 
       if (isDemoMatch || isRegisteredUser) {
-        Navigator.push(
+        await SessionManager().saveSession(email);
+        if (!mounted) return;
+        Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (context) => const HomeScreen()),
         );
