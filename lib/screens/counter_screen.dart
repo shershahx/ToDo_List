@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:to_do_list/utils/colors.dart';
+import 'package:to_do_list/utils/session_manager.dart';
 
 class CounterScreen extends StatefulWidget {
   const CounterScreen({super.key});
@@ -11,7 +12,8 @@ class CounterScreen extends StatefulWidget {
 
 class _CounterScreenState extends State<CounterScreen> {
   int _counter = 0;
-  static const String _key = 'counter_value';
+
+  String get _key => 'counter_value_${SessionManager().currentEmail ?? 'default'}';
 
   @override
   void initState() {
@@ -37,10 +39,8 @@ class _CounterScreenState extends State<CounterScreen> {
   }
 
   void _decrement() {
-    if (_counter > 0) {
-      setState(() => _counter--);
-      _saveCounter(_counter);
-    }
+    setState(() => _counter--);
+    _saveCounter(_counter);
   }
 
   void _reset() {
@@ -53,118 +53,67 @@ class _CounterScreenState extends State<CounterScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Counter'),
+        actions: [
+          if (_counter != 0)
+            TextButton(
+              onPressed: _reset,
+              child: const Text(
+                'Reset',
+                style: TextStyle(color: AppColors.textSecondary, fontSize: 14),
+              ),
+            ),
+        ],
       ),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Text(
-              'Counter Value',
+            Text(
+              '$_counter',
               style: TextStyle(
-                fontSize: 18,
-                color: AppColors.textSecondary,
+                fontSize: 96,
+                fontWeight: FontWeight.w200,
+                color: _counter > 0
+                    ? AppColors.success
+                    : _counter < 0
+                        ? AppColors.error
+                        : AppColors.textPrimary,
+                height: 1,
               ),
             ),
-            const SizedBox(height: 24),
-            // Counter circle display
-            Container(
-              width: 160,
-              height: 160,
-              decoration: BoxDecoration(
-                color: AppColors.card,
-                shape: BoxShape.circle,
-                border: Border.all(color: AppColors.primary, width: 3),
-                boxShadow: [
-                  BoxShadow(
-                    color: AppColors.primary.withValues(alpha: 0.25),
-                    blurRadius: 24,
-                    spreadRadius: 4,
-                  ),
-                ],
-              ),
-              child: Center(
-                child: Text(
-                  '$_counter',
-                  style: const TextStyle(
-                    fontSize: 64,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.primary,
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(height: 48),
-            // Control buttons
+            
+            const SizedBox(height: 56),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                _CounterButton(
+                _buildButton(
                   icon: Icons.remove_rounded,
-                  color: AppColors.error,
-                  onPressed: _decrement,
-                  tooltip: 'Decrease',
+                  onTap: _decrement,
                 ),
-                const SizedBox(width: 24),
-                _CounterButton(
-                  icon: Icons.refresh_rounded,
-                  color: AppColors.textSecondary,
-                  onPressed: _reset,
-                  tooltip: 'Reset',
-                ),
-                const SizedBox(width: 24),
-                _CounterButton(
+                const SizedBox(width: 32),
+                _buildButton(
                   icon: Icons.add_rounded,
-                  color: AppColors.success,
-                  onPressed: _increment,
-                  tooltip: 'Increase',
+                  onTap: _increment,
                 ),
               ],
-            ),
-            const SizedBox(height: 32),
-            const Text(
-              'Value is saved — persists across restarts',
-              style: TextStyle(
-                fontSize: 13,
-                color: AppColors.textSecondary,
-              ),
             ),
           ],
         ),
       ),
     );
   }
-}
 
-// Reusable circular icon button for the counter
-class _CounterButton extends StatelessWidget {
-  final IconData icon;
-  final Color color;
-  final VoidCallback onPressed;
-  final String tooltip;
-
-  const _CounterButton({
-    required this.icon,
-    required this.color,
-    required this.onPressed,
-    required this.tooltip,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Tooltip(
-      message: tooltip,
+  Widget _buildButton({required IconData icon, required VoidCallback onTap}) {
+    return Material(
+      color: AppColors.card,
+      borderRadius: BorderRadius.circular(16),
       child: InkWell(
-        onTap: onPressed,
-        borderRadius: BorderRadius.circular(50),
-        child: Container(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(16),
+        child: SizedBox(
           width: 72,
           height: 72,
-          decoration: BoxDecoration(
-            color: color.withValues(alpha: 0.15),
-            shape: BoxShape.circle,
-            border: Border.all(color: color, width: 2),
-          ),
-          child: Icon(icon, color: color, size: 32),
+          child: Icon(icon, color: AppColors.textPrimary, size: 28),
         ),
       ),
     );
