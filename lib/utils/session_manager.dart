@@ -1,4 +1,4 @@
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class SessionManager {
   static final SessionManager _instance = SessionManager._internal();
@@ -12,31 +12,30 @@ class SessionManager {
   /// Populated by [saveSession] and [loadSession].
   String? currentEmail;
 
+  final _storage = const FlutterSecureStorage();
+
   Future<void> saveSession(String email) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool(_loggedInKey, true);
-    await prefs.setString(_emailKey, email);
+    await _storage.write(key: _loggedInKey, value: 'true');
+    await _storage.write(key: _emailKey, value: email);
     currentEmail = email;
   }
 
   Future<bool> isLoggedIn() async {
-    final prefs = await SharedPreferences.getInstance();
-    final loggedIn = prefs.getBool(_loggedInKey) ?? false;
+    final loggedInStr = await _storage.read(key: _loggedInKey);
+    final loggedIn = loggedInStr == 'true';
     if (loggedIn) {
-      currentEmail = prefs.getString(_emailKey);
+      currentEmail = await _storage.read(key: _emailKey);
     }
     return loggedIn;
   }
 
   Future<String?> getEmail() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getString(_emailKey);
+    return await _storage.read(key: _emailKey);
   }
 
   Future<void> clearSession() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove(_loggedInKey);
-    await prefs.remove(_emailKey);
+    await _storage.delete(key: _loggedInKey);
+    await _storage.delete(key: _emailKey);
     currentEmail = null;
   }
 }

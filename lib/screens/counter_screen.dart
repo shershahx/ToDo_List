@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:to_do_list/utils/colors.dart';
 import 'package:to_do_list/utils/session_manager.dart';
 
@@ -13,6 +13,7 @@ class CounterScreen extends StatefulWidget {
 class _CounterScreenState extends State<CounterScreen> {
   int _counter = 0;
 
+  final _storage = const FlutterSecureStorage();
   String get _key => 'counter_value_${SessionManager().currentEmail ?? 'default'}';
 
   @override
@@ -22,15 +23,14 @@ class _CounterScreenState extends State<CounterScreen> {
   }
 
   Future<void> _loadCounter() async {
-    final prefs = await SharedPreferences.getInstance();
+    final valStr = await _storage.read(key: _key);
     setState(() {
-      _counter = prefs.getInt(_key) ?? 0;
+      _counter = valStr != null ? int.parse(valStr) : 0;
     });
   }
 
   Future<void> _saveCounter(int value) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setInt(_key, value);
+    await _storage.write(key: _key, value: value.toString());
   }
 
   void _increment() {

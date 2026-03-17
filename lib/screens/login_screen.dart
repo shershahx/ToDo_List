@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:to_do_list/screens/home_screen.dart';
 import 'package:to_do_list/screens/signup_screen.dart';
 import 'package:to_do_list/utils/colors.dart';
+import 'package:to_do_list/utils/page_transitions.dart';
 import 'package:to_do_list/utils/session_manager.dart';
 import 'package:to_do_list/utils/user_store.dart';
 import 'package:to_do_list/utils/validators.dart';
@@ -30,14 +31,6 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
-  void _fillDemoAccount() {
-    setState(() {
-      _emailController.text = _demoEmail;
-      _passwordController.text = _demoPassword;
-      _obscurePassword = false;
-    });
-  }
-
   void _showForgotPasswordDialog() {
     showDialog(
       context: context,
@@ -63,16 +56,17 @@ class _LoginScreenState extends State<LoginScreen> {
 
       // Check against demo account OR any registered user account
       final isDemoMatch = email == _demoEmail && password == _demoPassword;
-      final isRegisteredUser = UserStore().authenticate(email, password);
+      final isRegisteredUser = await UserStore().authenticate(email, password);
 
       if (isDemoMatch || isRegisteredUser) {
         await SessionManager().saveSession(email);
         if (!mounted) return;
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => const HomeScreen()),
+          FadeSlideRoute(page: const HomeScreen()),
         );
       } else {
+        if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: const Text('Invalid email or password'),
@@ -104,10 +98,13 @@ class _LoginScreenState extends State<LoginScreen> {
                     SizedBox(height: topPad),
 
                     // app icon
-                    Image(
-                      image: const AssetImage('assets/icon/icon.png'),
-                      width: iconSize,
-                      height: iconSize,
+                    Hero(
+                      tag: 'app-icon',
+                      child: Image(
+                        image: const AssetImage('assets/icon/icon.png'),
+                        width: iconSize,
+                        height: iconSize,
+                      ),
                     ),
                 const SizedBox(height: 28.0),
 
@@ -223,9 +220,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         onTap: () {
                           Navigator.push(
                             context,
-                            MaterialPageRoute(
-                              builder: (context) => const SignUpScreen(),
-                            ),
+                            FadeSlideRoute(page: const SignUpScreen()),
                           );
                         },
                         child: const Text(
@@ -279,7 +274,7 @@ class _ForgotPasswordDialogState extends State<_ForgotPasswordDialog> {
     super.dispose();
   }
 
-  void _onContinue() {
+  Future<void> _onContinue() async {
     if (!_emailFormKey.currentState!.validate()) return;
     final email = _emailCtrl.text.trim();
     if (email.toLowerCase() == widget.demoEmail) {
@@ -293,7 +288,9 @@ class _ForgotPasswordDialogState extends State<_ForgotPasswordDialog> {
       );
       return;
     }
-    if (!UserStore().emailExists(email)) {
+    final exists = await UserStore().emailExists(email);
+    if (!exists) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: const Text('No account found with this email.'),

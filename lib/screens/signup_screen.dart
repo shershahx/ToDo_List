@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:to_do_list/screens/login_screen.dart';
 import 'package:to_do_list/utils/colors.dart';
+import 'package:to_do_list/utils/page_transitions.dart';
 import 'package:to_do_list/utils/user_store.dart';
 import 'package:to_do_list/utils/validators.dart';
 
@@ -31,13 +32,14 @@ class _SignUpScreenState extends State<SignUpScreen> {
     super.dispose();
   }
 
-  void _handleSignUp() {
+  Future<void> _handleSignUp() async {
     if (_formKey.currentState!.validate()) {
       final email = _emailController.text.trim();
       final password = _passwordController.text;
 
       // Check if this email is already taken
-      if (UserStore().emailExists(email)) {
+      if (await UserStore().emailExists(email)) {
+        if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: const Text('An account with this email already exists'),
@@ -49,7 +51,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
       }
 
       // Save the new account
-      UserStore().register(email, password);
+      await UserStore().register(email, password);
+
+      if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -63,7 +67,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
       );
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => const LoginScreen()),
+        FadeSlideRoute(page: const LoginScreen()),
       );
     }
   }

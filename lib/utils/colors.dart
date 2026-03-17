@@ -12,4 +12,28 @@ class AppColors {
   static const Color error = Color(0xFFEF4444);        // Red for errors
   static const Color inputFill = Color(0xFF1E293B);    // Same as card for inputs
   static const Color skyBlue = Color(0xFF60A5FA);      // Blue for sign-up accents
+
+  // Task category colors
+  static const Color categoryWork = Color(0xFF3B82F6);
+  static const Color categoryPersonal = Color(0xFF10B981);
+  static const Color categoryUrgent = Color(0xFFEF4444);
+
+  static const Map<String, Color> categoryColors = {
+    'work': categoryWork,
+    'personal': categoryPersonal,
+    'urgent': categoryUrgent,
+  };
+
+  static const Map<String, String> categoryLabels = {
+    'none': 'None',
+    'work': 'Work',
+    'personal': 'Personal',
+    'urgent': 'Urgent',
+  };
+
+  static const Map<String, IconData> categoryIcons = {
+    'work': Icons.work_outline_rounded,
+    'personal': Icons.person_outline_rounded,
+    'urgent': Icons.priority_high_rounded,
+  };
 }

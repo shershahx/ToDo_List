@@ -1,12 +1,16 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:to_do_list/screens/counter_screen.dart';
 import 'package:to_do_list/screens/login_screen.dart';
 import 'package:to_do_list/utils/colors.dart';
 import 'package:to_do_list/utils/notification_service.dart';
+import 'package:to_do_list/utils/page_transitions.dart';
 import 'package:to_do_list/utils/session_manager.dart';
+
+enum _TaskFilter { all, pending, completed }
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -15,23 +19,162 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _HomeScreenState extends State<HomeScreen>
+    with SingleTickerProviderStateMixin {
   List<_Task> _tasks = [];
+  late final AnimationController _emptyAnimController;
+  late final Animation<double> _emptyPulse;
+  late final Animation<Offset> _emptySlide;
+
+  // Search & filter
+  _TaskFilter _filter = _TaskFilter.all;
+  String _searchQuery = '';
+  bool _isSearchOpen = false;
+  final _searchController = TextEditingController();
+
+  // Onboarding
+  bool _onboardingShown = false;
 
   String get _tasksKey => 'tasks_${SessionManager().currentEmail ?? 'default'}';
+  String get _onboardingKey => 'onboarding_shown_${SessionManager().currentEmail ?? 'default'}';
+  final _storage = const FlutterSecureStorage();
+
+  String get _greeting {
+    final hour = DateTime.now().hour;
+    if (hour < 12) return 'Good morning ☀️';
+    if (hour < 17) return 'Good afternoon';
+    return 'Good evening 🌙';
+  }
 
   @override
   void initState() {
     super.initState();
     NotificationService().init();
     _loadTasks();
+    _checkOnboarding();
+
+    _emptyAnimController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 2000),
+    )..repeat(reverse: true);
+
+    _emptyPulse = Tween<double>(begin: 0.92, end: 1.08).animate(
+      CurvedAnimation(parent: _emptyAnimController, curve: Curves.easeInOut),
+    );
+
+    _emptySlide = Tween<Offset>(
+      begin: const Offset(0, 0.3),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(
+      parent: _emptyAnimController,
+      curve: const Interval(0, 0.5, curve: Curves.easeOut),
+    ));
+  }
+
+  @override
+  void dispose() {
+    _emptyAnimController.dispose();
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _checkOnboarding() async {
+    final shownStr = await _storage.read(key: _onboardingKey);
+    _onboardingShown = shownStr == 'true';
+  }
+
+  Future<void> _maybeShowOnboarding() async {
+    if (!_onboardingShown && _tasks.length == 1) {
+      _onboardingShown = true;
+      await _storage.write(key: _onboardingKey, value: 'true');
+      Future.delayed(const Duration(milliseconds: 600), () {
+        if (mounted) _showOnboarding();
+      });
+    }
+  }
+
+  void _showOnboarding() {
+    showDialog(
+      context: context,
+      barrierColor: Colors.black54,
+      builder: (ctx) => Center(
+        child: Material(
+          color: Colors.transparent,
+          child: Container(
+            margin: const EdgeInsets.symmetric(horizontal: 32),
+            padding: const EdgeInsets.all(28),
+            decoration: BoxDecoration(
+              color: AppColors.card,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: AppColors.primary.withValues(alpha: 0.2)),
+            ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.swipe_rounded, size: 44, color: AppColors.primary),
+              const SizedBox(height: 20),
+              const Text(
+                'Swipe Gestures',
+                style: TextStyle(
+                  fontSize: 20, fontWeight: FontWeight.w600,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Icon(Icons.arrow_forward_rounded, size: 18, color: AppColors.success),
+                  const SizedBox(width: 8),
+                  const Expanded(
+                    child: Text(
+                      'Swipe right to complete',
+                      style: TextStyle(color: AppColors.textSecondary, fontSize: 14),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              Row(
+                children: [
+                  Icon(Icons.arrow_back_rounded, size: 18, color: AppColors.error),
+                  const SizedBox(width: 8),
+                  const Expanded(
+                    child: Text(
+                      'Swipe left to delete',
+                      style: TextStyle(color: AppColors.textSecondary, fontSize: 14),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 24),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    elevation: 0,
+                  ),
+                  child: const Text('Got it!', style: TextStyle(fontWeight: FontWeight.w600)),
+                ),
+              ),
+            ],
+          ),
+        ),
+        ),
+      ),
+    );
   }
 
   // ── Persistence ────────────────────────────────────────────────────────────
 
   Future<void> _loadTasks() async {
-    final prefs = await SharedPreferences.getInstance();
-    final raw = prefs.getString(_tasksKey);
+    final raw = await _storage.read(key: _tasksKey);
     if (raw != null) {
       final List decoded = jsonDecode(raw) as List;
       setState(() {
@@ -43,21 +186,21 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _saveTasks() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(
-      _tasksKey,
-      jsonEncode(_tasks.map((t) => t.toJson()).toList()),
+    await _storage.write(
+      key: _tasksKey,
+      value: jsonEncode(_tasks.map((t) => t.toJson()).toList()),
     );
   }
 
   // ── Task operations ────────────────────────────────────────────────────────
 
-  void _addTask(String title, DateTime? dueDate) {
-    final task = _Task(title: title.trim(), dueDate: dueDate);
+  void _addTask(String title, DateTime? dueDate, {String category = 'none'}) {
+    final task = _Task(title: title.trim(), dueDate: dueDate, category: category);
     setState(() {
       _tasks.add(task);
     });
     _saveTasks();
+    _maybeShowOnboarding();
 
     // Schedule notification if due date is set and in the future
     if (dueDate != null && dueDate.isAfter(DateTime.now())) {
@@ -70,6 +213,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _toggleTask(int index) {
+    HapticFeedback.lightImpact();
     final task = _tasks[index];
     final nowDone = !task.done;
     setState(() {
@@ -90,6 +234,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _deleteTask(int index) {
+    HapticFeedback.mediumImpact();
     final removed = _tasks[index];
     setState(() {
       _tasks.removeAt(index);
@@ -133,6 +278,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final controller = TextEditingController();
     final formKey = GlobalKey<FormState>();
     DateTime? selectedDate;
+    String selectedCategory = 'none';
 
     showModalBottomSheet(
       context: context,
@@ -304,11 +450,64 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                       ),
                     ),
+                    const SizedBox(height: 12),
+                    // Category picker
+                    Wrap(
+                      spacing: 8,
+                      children: AppColors.categoryLabels.entries.map((e) {
+                        final isSelected = selectedCategory == e.key;
+                        final catColor = AppColors.categoryColors[e.key];
+                        return GestureDetector(
+                          onTap: () => setSheetState(() => selectedCategory = e.key),
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 200),
+                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                            decoration: BoxDecoration(
+                              color: isSelected
+                                  ? (catColor ?? AppColors.textSecondary).withValues(alpha: 0.15)
+                                  : AppColors.background,
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(
+                                color: isSelected
+                                    ? (catColor ?? AppColors.textSecondary)
+                                    : AppColors.textSecondary.withValues(alpha: 0.2),
+                                width: isSelected ? 1.5 : 1,
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                if (catColor != null) ...[
+                                  Container(
+                                    width: 8, height: 8,
+                                    decoration: BoxDecoration(
+                                      color: catColor,
+                                      shape: BoxShape.circle,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 6),
+                                ],
+                                Text(
+                                  e.value,
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                                    color: isSelected
+                                        ? (catColor ?? AppColors.textPrimary)
+                                        : AppColors.textSecondary,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      }).toList(),
+                    ),
                     const SizedBox(height: 16),
                     ElevatedButton(
                       onPressed: () {
                         if (formKey.currentState!.validate()) {
-                          _addTask(controller.text, selectedDate);
+                          _addTask(controller.text, selectedDate, category: selectedCategory);
                           Navigator.of(ctx).pop();
                         }
                       },
@@ -344,25 +543,65 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final pending = _tasks.where((t) => !t.done).toList();
-    final completed = _tasks.where((t) => t.done).toList();
+    // Apply search + filter
+    var allPending = _tasks.where((t) => !t.done).toList();
+    var allCompleted = _tasks.where((t) => t.done).toList();
+
+    if (_searchQuery.isNotEmpty) {
+      final q = _searchQuery.toLowerCase();
+      allPending = allPending.where((t) => t.title.toLowerCase().contains(q)).toList();
+      allCompleted = allCompleted.where((t) => t.title.toLowerCase().contains(q)).toList();
+    }
+
+    final showPending = _filter != _TaskFilter.completed;
+    final showCompleted = _filter != _TaskFilter.pending;
+    final pending = showPending ? allPending : <_Task>[];
+    final completed = showCompleted ? allCompleted : <_Task>[];
+
     final total = _tasks.length;
-    final doneCount = completed.length;
+    final doneCount = _tasks.where((t) => t.done).length;
     final progress = total == 0 ? 0.0 : doneCount / total;
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          'My Tasks',
-          style: TextStyle(fontWeight: FontWeight.w600),
-        ),
+        title: _isSearchOpen
+            ? TextField(
+                controller: _searchController,
+                autofocus: true,
+                style: const TextStyle(color: AppColors.textPrimary, fontSize: 16),
+                decoration: InputDecoration(
+                  hintText: 'Search tasks...',
+                  hintStyle: TextStyle(color: AppColors.textSecondary.withValues(alpha: 0.6)),
+                  border: InputBorder.none,
+                  contentPadding: EdgeInsets.zero,
+                  isDense: true,
+                ),
+                onChanged: (val) => setState(() => _searchQuery = val),
+              )
+            : Text(
+                _greeting,
+                style: const TextStyle(fontWeight: FontWeight.w600),
+              ),
         automaticallyImplyLeading: false,
         actions: [
           IconButton(
             onPressed: () {
+              setState(() {
+                _isSearchOpen = !_isSearchOpen;
+                if (!_isSearchOpen) {
+                  _searchQuery = '';
+                  _searchController.clear();
+                }
+              });
+            },
+            icon: Icon(_isSearchOpen ? Icons.close_rounded : Icons.search_rounded, size: 22),
+            tooltip: _isSearchOpen ? 'Close search' : 'Search',
+          ),
+          IconButton(
+            onPressed: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (_) => const CounterScreen()),
+                FadeSlideRoute(page: const CounterScreen()),
               );
             },
             icon: const Icon(Icons.speed_rounded, size: 22),
@@ -373,7 +612,7 @@ class _HomeScreenState extends State<HomeScreen> {
               final nav = Navigator.of(context);
               await SessionManager().clearSession();
               nav.pushReplacement(
-                MaterialPageRoute(builder: (_) => const LoginScreen()),
+                FadeSlideRoute(page: const LoginScreen()),
               );
             },
             icon: const Icon(Icons.logout_rounded, size: 22),
@@ -383,7 +622,9 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       body: total == 0
           ? _buildEmptyState()
-          : CustomScrollView(
+          : (pending.isEmpty && completed.isEmpty && _searchQuery.isNotEmpty)
+              ? _buildNoResultsState()
+              : CustomScrollView(
               slivers: [
                 // Progress card
                 SliverToBoxAdapter(
@@ -393,6 +634,48 @@ class _HomeScreenState extends State<HomeScreen> {
                       done: doneCount,
                       total: total,
                       progress: progress,
+                    ),
+                  ),
+                ),
+
+                // Filter chips
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
+                    child: Row(
+                      children: _TaskFilter.values.map((f) {
+                        final isSelected = _filter == f;
+                        final label = f == _TaskFilter.all
+                            ? 'All'
+                            : f == _TaskFilter.pending
+                                ? 'Pending'
+                                : 'Completed';
+                        return Padding(
+                          padding: const EdgeInsets.only(right: 8),
+                          child: ChoiceChip(
+                            label: Text(label),
+                            selected: isSelected,
+                            onSelected: (_) => setState(() => _filter = f),
+                            selectedColor: AppColors.primary.withValues(alpha: 0.2),
+                            backgroundColor: AppColors.card,
+                            labelStyle: TextStyle(
+                              color: isSelected ? AppColors.primary : AppColors.textSecondary,
+                              fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                              fontSize: 13,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(20),
+                              side: BorderSide(
+                                color: isSelected
+                                    ? AppColors.primary.withValues(alpha: 0.5)
+                                    : Colors.transparent,
+                              ),
+                            ),
+                            showCheckmark: false,
+                            padding: const EdgeInsets.symmetric(horizontal: 4),
+                          ),
+                        );
+                      }).toList(),
                     ),
                   ),
                 ),
@@ -423,8 +706,23 @@ class _HomeScreenState extends State<HomeScreen> {
                         padding: const EdgeInsets.symmetric(horizontal: 16),
                         child: Dismissible(
                           key: ValueKey('task_${pending[i].title}_$realIndex'),
-                          direction: DismissDirection.endToStart,
+                          direction: DismissDirection.horizontal,
+                          // Swipe right → complete
                           background: Container(
+                            alignment: Alignment.centerLeft,
+                            padding: const EdgeInsets.only(left: 20),
+                            margin: const EdgeInsets.only(bottom: 8),
+                            decoration: BoxDecoration(
+                              color: AppColors.success.withValues(alpha: 0.12),
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                            child: const Icon(
+                              Icons.check_circle_outline_rounded,
+                              color: AppColors.success,
+                            ),
+                          ),
+                          // Swipe left → delete
+                          secondaryBackground: Container(
                             alignment: Alignment.centerRight,
                             padding: const EdgeInsets.only(right: 20),
                             margin: const EdgeInsets.only(bottom: 8),
@@ -437,6 +735,13 @@ class _HomeScreenState extends State<HomeScreen> {
                               color: AppColors.error,
                             ),
                           ),
+                          confirmDismiss: (direction) async {
+                            if (direction == DismissDirection.startToEnd) {
+                              _toggleTask(realIndex);
+                              return false; // don't remove, just toggle
+                            }
+                            return true; // allow delete
+                          },
                           onDismissed: (_) => _deleteTask(realIndex),
                           child: _TaskTile(
                             task: pending[i],
@@ -476,8 +781,23 @@ class _HomeScreenState extends State<HomeScreen> {
                         padding: const EdgeInsets.symmetric(horizontal: 16),
                         child: Dismissible(
                           key: ValueKey('task_done_${completed[i].title}_$realIndex'),
-                          direction: DismissDirection.endToStart,
+                          direction: DismissDirection.horizontal,
+                          // Swipe right → uncomplete
                           background: Container(
+                            alignment: Alignment.centerLeft,
+                            padding: const EdgeInsets.only(left: 20),
+                            margin: const EdgeInsets.only(bottom: 8),
+                            decoration: BoxDecoration(
+                              color: AppColors.primary.withValues(alpha: 0.12),
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                            child: const Icon(
+                              Icons.replay_rounded,
+                              color: AppColors.primary,
+                            ),
+                          ),
+                          // Swipe left → delete
+                          secondaryBackground: Container(
                             alignment: Alignment.centerRight,
                             padding: const EdgeInsets.only(right: 20),
                             margin: const EdgeInsets.only(bottom: 8),
@@ -490,6 +810,13 @@ class _HomeScreenState extends State<HomeScreen> {
                               color: AppColors.error,
                             ),
                           ),
+                          confirmDismiss: (direction) async {
+                            if (direction == DismissDirection.startToEnd) {
+                              _toggleTask(realIndex);
+                              return false;
+                            }
+                            return true;
+                          },
                           onDismissed: (_) => _deleteTask(realIndex),
                           child: _TaskTile(
                             task: completed[i],
@@ -524,34 +851,80 @@ class _HomeScreenState extends State<HomeScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Container(
-              padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(
-                color: AppColors.primary.withValues(alpha: 0.08),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                Icons.task_alt_rounded,
-                size: 56,
-                color: AppColors.primary.withValues(alpha: 0.5),
+            ScaleTransition(
+              scale: _emptyPulse,
+              child: Container(
+                padding: const EdgeInsets.all(28),
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withValues(alpha: 0.08),
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.primary.withValues(alpha: 0.08),
+                      blurRadius: 30,
+                      spreadRadius: 5,
+                    ),
+                  ],
+                ),
+                child: Icon(
+                  Icons.task_alt_rounded,
+                  size: 56,
+                  color: AppColors.primary.withValues(alpha: 0.6),
+                ),
               ),
             ),
-            const SizedBox(height: 24),
-            const Text(
-              'All clear!',
-              style: TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.w600,
-                color: AppColors.textPrimary,
+            const SizedBox(height: 28),
+            SlideTransition(
+              position: _emptySlide,
+              child: Column(
+                children: [
+                  const Text(
+                    'All clear!',
+                    style: TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  const Text(
+                    'Tap  +  to add your first task',
+                    style: TextStyle(fontSize: 14, color: AppColors.textSecondary),
+                  ),
+                ],
               ),
-            ),
-            const SizedBox(height: 8),
-            const Text(
-              'Tap  +  to add your first task',
-              style: TextStyle(fontSize: 14, color: AppColors.textSecondary),
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildNoResultsState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.search_off_rounded,
+            size: 48,
+            color: AppColors.textSecondary.withValues(alpha: 0.5),
+          ),
+          const SizedBox(height: 16),
+          const Text(
+            'No tasks found',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w500,
+              color: AppColors.textPrimary,
+            ),
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            'Try adjusting your search or filters',
+            style: TextStyle(fontSize: 14, color: AppColors.textSecondary),
+          ),
+        ],
       ),
     );
   }
@@ -646,19 +1019,27 @@ class _Task {
   final String title;
   final bool done;
   final DateTime? dueDate;
+  final String category;
 
-  const _Task({required this.title, this.done = false, this.dueDate});
+  const _Task({
+    required this.title,
+    this.done = false,
+    this.dueDate,
+    this.category = 'none',
+  });
 
-  _Task copyWith({String? title, bool? done, DateTime? dueDate}) => _Task(
+  _Task copyWith({String? title, bool? done, DateTime? dueDate, String? category}) => _Task(
         title: title ?? this.title,
         done: done ?? this.done,
         dueDate: dueDate ?? this.dueDate,
+        category: category ?? this.category,
       );
 
   Map<String, dynamic> toJson() => {
         'title': title,
         'done': done,
         'dueDate': dueDate?.toIso8601String(),
+        'category': category,
       };
 
   factory _Task.fromJson(Map<String, dynamic> json) => _Task(
@@ -667,6 +1048,7 @@ class _Task {
         dueDate: json['dueDate'] != null
             ? DateTime.parse(json['dueDate'] as String)
             : null,
+        category: (json['category'] as String?) ?? 'none',
       );
 }
 
@@ -734,7 +1116,18 @@ class _TaskTile extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
             child: Row(
               children: [
-                // Checkbox
+                // Category dot + Checkbox
+                if (task.category != 'none') ...[
+                  Container(
+                    width: 8,
+                    height: 8,
+                    decoration: BoxDecoration(
+                      color: AppColors.categoryColors[task.category],
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                ],
                 AnimatedContainer(
                   duration: const Duration(milliseconds: 200),
                   width: 24,
@@ -766,7 +1159,7 @@ class _TaskTile extends StatelessWidget {
                           fontSize: 15,
                           fontWeight: FontWeight.w400,
                           color: isDone
-                              ? AppColors.textSecondary
+                              ? AppColors.textSecondary.withValues(alpha: 0.5)
                               : AppColors.textPrimary,
                         ),
                       ),
