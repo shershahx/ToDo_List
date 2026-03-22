@@ -44,6 +44,15 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Sensitive / generated files
+**/google-services.json
+**/GoogleService-Info.plist
+android/key.properties
+*.jks
+*.keystore
+
+# Project-specific exclusions
 *.jpg
 context.md
 CONTEXT.md

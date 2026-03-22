@@ -1,11 +1,11 @@
 # Task Management App — Flutter Internship (Weeks 1–3)
 
 ## Overview
-A feature-rich task management application built with Flutter over a three-week internship. The app progresses from a polished login flow (Week 1) through persistent storage and state management (Week 2) to a fully refined task manager with search, filtering, categories, swipe gestures, and secure data storage (Week 3).
+A feature-rich task management application built with Flutter over a three-week internship. The app progresses from a polished login flow (Week 1) through persistent storage and state management (Week 2) to a fully refined task manager with search, filtering, categories, swipe gestures, Google Sign-In, and encrypted storage (Week 3).
 
 ## Screenshots
 
-<!-- ![App Screenshot](Screenshot.jpg) -->
+![App Screenshot](Screenshot.jpg)
 
 ## Features
 
@@ -28,9 +28,10 @@ A feature-rich task management application built with Flutter over a three-week 
   - Overdue tasks show a red border and "Overdue" label.
 - **Due Date Notifications:** Scheduling a due date automatically sets a local notification reminder. Notifications cancel when a task is completed or deleted.
 - **Progress Tracker:** Circular progress indicator with percentage and "X of N completed" count.
-- **SharedPreferences:** Tasks (JSON), counter value, and session state all persist locally — zero data loss on restart.
+- **Data Persistence:** Tasks (JSON), counter value, and session state all persist locally — zero data loss on restart.
 
 ### Week 3 — Finishing Touches & Final Polish
+- **Google Sign-In:** One-tap authentication via Firebase Auth + Google Sign-In. Available on both Login and Sign Up screens with an "OR" divider and loading state.
 - **Search:** Real-time task search from the app bar toggles an inline search field; results filter across both pending and completed lists.
 - **Filter Chips:** "All", "Pending", and "Completed" choice chips let users quickly narrow the task view.
 - **Task Categories:** Assign a color-coded category (Work 🔵, Personal 🟢, Urgent 🔴) when creating a task. Category dots appear on each task tile.
@@ -52,24 +53,25 @@ A feature-rich task management application built with Flutter over a three-week 
 | Email    | `demo@todoapp.com` |
 | Password | `Demo@1234`        |
 
-Or create your own account via **Sign Up**.
+Or create your own account via **Sign Up**, or tap **Continue with Google**.
 
 ## Project Structure
 
 ```
 lib/
-├── main.dart                      — App entry point, global dark theme, Roboto font
+├── main.dart                      — App entry point, Firebase init, dark theme
 ├── screens/
 │   ├── splash_screen.dart         — Launch screen, checks session on startup
-│   ├── login_screen.dart          — Login with validation, saves session on success
-│   ├── signup_screen.dart         — Registration with validation
+│   ├── login_screen.dart          — Login with email/password + Google Sign-In
+│   ├── signup_screen.dart         — Registration + Google Sign-In
 │   ├── home_screen.dart           — To-do list with search, filters, categories, swipe
 │   └── counter_screen.dart        — Counter app (setState + secure storage)
 └── utils/
     ├── colors.dart                — Centralized dark-mode color palette + category colors
     ├── validators.dart            — Reusable form validators
-    ├── user_store.dart            — In-memory user registry (auth)
-    ├── session_manager.dart       — flutter_secure_storage-backed login session
+    ├── user_store.dart            — Encrypted user registry (email/password auth)
+    ├── session_manager.dart       — Secure session persistence (email + Google method)
+    ├── google_auth_service.dart   — Google Sign-In + Firebase Auth wrapper
     ├── notification_service.dart  — Local notification scheduling & cancellation
     └── page_transitions.dart      — Reusable fade + slide-up page transition
 ```
@@ -79,8 +81,14 @@ lib/
 1. Install Flutter — [flutter.dev](https://flutter.dev)
 2. Clone the repository.
 3. Run `flutter pub get` to fetch dependencies.
-4. Connect a device or start an emulator.
-5. Run `flutter run`.
+4. **Firebase setup** (required for Google Sign-In):
+   - Create a project at [console.firebase.google.com](https://console.firebase.google.com)
+   - Register your Android app with package name `com.shershah.to_do_list`
+   - Download `google-services.json` → place in `android/app/`
+   - Enable **Google** as a sign-in provider under Authentication → Sign-in method
+   - Add your SHA-1 key (run `cd android && ./gradlew signingReport`)
+5. Connect a device or start an emulator.
+6. Run `flutter run`.
 
 > **Android note:** The app requests notification permission at runtime (Android 13+). Allow it to receive due-date reminders.
 
@@ -88,6 +96,9 @@ lib/
 
 | Package                       | Purpose                                          |
 | ----------------------------- | ------------------------------------------------ |
+| `firebase_core`               | Firebase SDK initialization                      |
+| `firebase_auth`               | Firebase Authentication (Google Sign-In backend) |
+| `google_sign_in`              | Native Google Sign-In flow                       |
 | `flutter_secure_storage`      | Encrypted storage for tasks, session & counter   |
 | `shared_preferences`          | Lightweight local key-value persistence          |
 | `flutter_local_notifications` | Schedule and cancel due-date reminders           |
@@ -113,6 +124,7 @@ lib/
 
 **Week 3**
 - Combine all learned concepts into a polished, functional task management app.
+- Integrate Firebase Authentication with Google Sign-In.
 - Add, delete, and mark tasks as complete with data persistence.
 - Test and debug the app for proper navigation and data integrity.
 - Enhance the UI with a custom app bar, action buttons, category colors, and Material icons.
@@ -124,3 +136,4 @@ lib/
 
 ## Bonus Challenges Completed
 - ✅ Splash screen with session-aware routing
+- ✅ Firebase integration (Google Sign-In via Firebase Auth)

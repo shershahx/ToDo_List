@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:to_do_list/screens/home_screen.dart';
 import 'package:to_do_list/screens/signup_screen.dart';
 import 'package:to_do_list/utils/colors.dart';
+import 'package:to_do_list/utils/google_auth_service.dart';
 import 'package:to_do_list/utils/page_transitions.dart';
 import 'package:to_do_list/utils/session_manager.dart';
 import 'package:to_do_list/utils/user_store.dart';
@@ -19,6 +20,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _obscurePassword = true;
+  bool _isGoogleLoading = false;
 
   // demo credentials — for quick testing without creating an account
   static const String _demoEmail = 'demo@todoapp.com';
@@ -59,7 +61,7 @@ class _LoginScreenState extends State<LoginScreen> {
       final isRegisteredUser = await UserStore().authenticate(email, password);
 
       if (isDemoMatch || isRegisteredUser) {
-        await SessionManager().saveSession(email);
+        await SessionManager().saveSession(email, method: 'email');
         if (!mounted) return;
         Navigator.pushReplacement(
           context,
@@ -75,6 +77,34 @@ class _LoginScreenState extends State<LoginScreen> {
           ),
         );
       }
+    }
+  }
+
+  Future<void> _handleGoogleSignIn() async {
+    setState(() => _isGoogleLoading = true);
+    try {
+      final email = await GoogleAuthService().signInWithGoogle();
+      if (!mounted) return;
+      if (email != null) {
+        await SessionManager().saveSession(email, method: 'google');
+        if (!mounted) return;
+        Navigator.pushReplacement(
+          context,
+          FadeSlideRoute(page: const HomeScreen()),
+        );
+      } else {
+        setState(() => _isGoogleLoading = false);
+      }
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _isGoogleLoading = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Google sign-in failed. Please try again.'),
+          backgroundColor: AppColors.error,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
     }
   }
 
@@ -204,6 +234,76 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ),
                   child: const Text('Login'),
+                ),
+                const SizedBox(height: 20.0),
+
+                // OR divider
+                Row(
+                  children: [
+                    Expanded(
+                      child: Divider(
+                        color: AppColors.textSecondary.withValues(alpha: 0.3),
+                      ),
+                    ),
+                    const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 16),
+                      child: Text(
+                        'OR',
+                        style: TextStyle(
+                          color: AppColors.textSecondary,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      child: Divider(
+                        color: AppColors.textSecondary.withValues(alpha: 0.3),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 20.0),
+
+                // Google Sign-In button
+                OutlinedButton.icon(
+                  onPressed: _isGoogleLoading ? null : _handleGoogleSignIn,
+                  icon: _isGoogleLoading
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: AppColors.textSecondary,
+                          ),
+                        )
+                      : Image.network(
+                          'https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg',
+                          width: 20,
+                          height: 20,
+                          errorBuilder: (context, error, stackTrace) => const Icon(
+                            Icons.g_mobiledata_rounded,
+                            size: 24,
+                            color: AppColors.textPrimary,
+                          ),
+                        ),
+                  label: Text(
+                    _isGoogleLoading ? 'Signing in...' : 'Continue with Google',
+                    style: const TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppColors.textPrimary,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    side: BorderSide(
+                      color: AppColors.textSecondary.withValues(alpha: 0.3),
+                    ),
+                  ),
                 ),
                 const SizedBox(height: 24.0),
 
