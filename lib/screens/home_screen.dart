@@ -565,18 +565,29 @@ class _HomeScreenState extends State<HomeScreen>
     return Scaffold(
       appBar: AppBar(
         title: _isSearchOpen
-            ? TextField(
-                controller: _searchController,
-                autofocus: true,
-                style: const TextStyle(color: AppColors.textPrimary, fontSize: 16),
-                decoration: InputDecoration(
-                  hintText: 'Search tasks...',
-                  hintStyle: TextStyle(color: AppColors.textSecondary.withValues(alpha: 0.6)),
-                  border: InputBorder.none,
-                  contentPadding: EdgeInsets.zero,
-                  isDense: true,
+            ? Container(
+                height: 40,
+                decoration: BoxDecoration(
+                  color: AppColors.background,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: AppColors.textSecondary.withValues(alpha: 0.2)),
                 ),
-                onChanged: (val) => setState(() => _searchQuery = val),
+                child: TextField(
+                  controller: _searchController,
+                  autofocus: true,
+                  style: const TextStyle(color: AppColors.textPrimary, fontSize: 15),
+                  decoration: InputDecoration(
+                    prefixIcon: const Icon(Icons.search_rounded, size: 18, color: AppColors.textSecondary),
+                    hintText: 'Search tasks...',
+                    hintStyle: TextStyle(color: AppColors.textSecondary.withValues(alpha: 0.6)),
+                    border: InputBorder.none,
+                    enabledBorder: InputBorder.none,
+                    focusedBorder: InputBorder.none,
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 0, vertical: 10),
+                    isDense: true,
+                  ),
+                  onChanged: (val) => setState(() => _searchQuery = val),
+                ),
               )
             : Text(
                 _greeting,

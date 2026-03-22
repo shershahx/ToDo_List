@@ -42,34 +42,61 @@ class NotificationService {
     required int id,
     required String title,
     required DateTime scheduledDate,
+    int advanceMinutes = 15,
   }) async {
     final tzDate = tz.TZDateTime.from(scheduledDate, tz.local);
+    final now = tz.TZDateTime.now(tz.local);
 
-    // Don't schedule if date is in the past
-    if (tzDate.isBefore(tz.TZDateTime.now(tz.local))) return;
-
-    await _plugin.zonedSchedule(
-      id,
-      'Task Reminder',
-      title,
-      tzDate,
-      const NotificationDetails(
-        android: AndroidNotificationDetails(
-          'task_reminders',
-          'Task Reminders',
-          channelDescription: 'Reminder notifications for your tasks',
-          importance: Importance.high,
-          priority: Priority.high,
+    // 1. Advance Reminder (e.g. Due in 15 minutes)
+    final advanceDate = tzDate.subtract(Duration(minutes: advanceMinutes));
+    if (advanceDate.isAfter(now)) {
+      await _plugin.zonedSchedule(
+        id + 1000000, // Offset ID so it doesn't collide
+        'Upcoming Task',
+        'Due in $advanceMinutes minutes: $title',
+        advanceDate,
+        const NotificationDetails(
+          android: AndroidNotificationDetails(
+            'task_reminders',
+            'Task Reminders',
+            channelDescription: 'Reminder notifications for your tasks',
+            importance: Importance.high,
+            priority: Priority.high,
+          ),
+          iOS: DarwinNotificationDetails(),
         ),
-        iOS: DarwinNotificationDetails(),
-      ),
-      androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
-      uiLocalNotificationDateInterpretation:
-          UILocalNotificationDateInterpretation.absoluteTime,
-    );
+        androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+        uiLocalNotificationDateInterpretation:
+            UILocalNotificationDateInterpretation.absoluteTime,
+      );
+    }
+
+    // 2. Exact Time Reminder
+    if (tzDate.isAfter(now)) {
+      await _plugin.zonedSchedule(
+        id,
+        'Task Due',
+        title,
+        tzDate,
+        const NotificationDetails(
+          android: AndroidNotificationDetails(
+            'task_reminders',
+            'Task Reminders',
+            channelDescription: 'Reminder notifications for your tasks',
+            importance: Importance.high,
+            priority: Priority.high,
+          ),
+          iOS: DarwinNotificationDetails(),
+        ),
+        androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+        uiLocalNotificationDateInterpretation:
+            UILocalNotificationDateInterpretation.absoluteTime,
+      );
+    }
   }
 
   Future<void> cancel(int id) async {
-    await _plugin.cancel(id);
+    await _plugin.cancel(id); // Main reminder
+    await _plugin.cancel(id + 1000000); // Advance reminder
   }
 }
