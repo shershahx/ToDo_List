@@ -9,15 +9,15 @@ A feature-rich task management application built with Flutter over a three-week 
 
 | Splash Screen | Login Screen | Sign Up Screen |
 | :---: | :---: | :---: |
-| ![Splash Screen](Screenshot%20(1).jpg) | ![Login Screen](Screenshot%20(2).jpg) | ![Sign Up Screen](Screenshot%20(3).jpg) |
+| ![Splash Screen](screenshots/Screenshot%20(1).jpg) | ![Login Screen](screenshots/Screenshot%20(2).jpg) | ![Sign Up Screen](screenshots/Screenshot%20(3).jpg) |
 
 | Home (Empty) | Add Task (Empty) | Add Task (Data) |
 | :---: | :---: | :---: |
-| ![Empty State](Screenshot%20(4).jpg) | ![Add Task Empty](Screenshot%20(5).jpg) | ![Add Task Data](Screenshot%20(6).jpg) |
+| ![Empty State](screenshots/Screenshot%20(4).jpg) | ![Add Task Empty](screenshots/Screenshot%20(5).jpg) | ![Add Task Data](screenshots/Screenshot%20(6).jpg) |
 
 | Home (With Tasks) |
 | :---: |
-| ![Home Screen](Screenshot%20(7).jpg) |
+| ![Home Screen](screenshots/Screenshot%20(7).jpg) |
 
 </div>
 
