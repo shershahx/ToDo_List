@@ -53,7 +53,6 @@ android/key.properties
 *.keystore
 
 # Project-specific exclusions
-*.jpg
 context.md
 CONTEXT.md
 Flutter Development Interns Task.md
