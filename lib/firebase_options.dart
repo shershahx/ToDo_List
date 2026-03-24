@@ -3,6 +3,7 @@
 import 'package:firebase_core/firebase_core.dart' show FirebaseOptions;
 import 'package:flutter/foundation.dart'
     show defaultTargetPlatform, kIsWeb, TargetPlatform;
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 /// Default [FirebaseOptions] for use with your Firebase apps.
 ///
@@ -46,8 +47,8 @@ class DefaultFirebaseOptions {
     }
   }
 
-  static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'AIzaSyCT8jE4mN5l9CMzWQOsaDumf0LZap39ovw',
+  static FirebaseOptions get web => FirebaseOptions(
+    apiKey: dotenv.env['FIREBASE_WEB_API_KEY'] ?? '',
     appId: '1:113562062731:web:99d46884702defb20b298e',
     messagingSenderId: '113562062731',
     projectId: 'todo-list-fd3a0',
@@ -56,16 +57,16 @@ class DefaultFirebaseOptions {
     measurementId: 'G-1QGHNZYTBZ',
   );
 
-  static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyCINwlz27Qddl4oNk-DJYemm3OJ70fg8oI',
+  static FirebaseOptions get android => FirebaseOptions(
+    apiKey: dotenv.env['FIREBASE_ANDROID_API_KEY'] ?? '',
     appId: '1:113562062731:android:6048e8020a59316c0b298e',
     messagingSenderId: '113562062731',
     projectId: 'todo-list-fd3a0',
     storageBucket: 'todo-list-fd3a0.firebasestorage.app',
   );
 
-  static const FirebaseOptions windows = FirebaseOptions(
-    apiKey: 'AIzaSyCT8jE4mN5l9CMzWQOsaDumf0LZap39ovw',
+  static FirebaseOptions get windows => FirebaseOptions(
+    apiKey: dotenv.env['FIREBASE_WINDOWS_API_KEY'] ?? '',
     appId: '1:113562062731:web:9b8bbd27ff92d45e0b298e',
     messagingSenderId: '113562062731',
     projectId: 'todo-list-fd3a0',
