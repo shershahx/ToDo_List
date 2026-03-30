@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:to_do_list/screens/counter_screen.dart';
 import 'package:to_do_list/screens/login_screen.dart';
+import 'package:to_do_list/screens/users_screen.dart';
 import 'package:to_do_list/utils/colors.dart';
 import 'package:to_do_list/utils/notification_service.dart';
 import 'package:to_do_list/utils/page_transitions.dart';
@@ -607,6 +608,16 @@ class _HomeScreenState extends State<HomeScreen>
             },
             icon: Icon(_isSearchOpen ? Icons.close_rounded : Icons.search_rounded, size: 22),
             tooltip: _isSearchOpen ? 'Close search' : 'Search',
+          ),
+          IconButton(
+            onPressed: () {
+              Navigator.push(
+                context,
+                FadeSlideRoute(page: const UsersScreen()),
+              );
+            },
+            icon: const Icon(Icons.people_outline_rounded, size: 22),
+            tooltip: 'Users',
           ),
           IconButton(
             onPressed: () {
