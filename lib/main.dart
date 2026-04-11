@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:provider/provider.dart';
+import 'package:to_do_list/providers/counter_provider.dart';
+import 'package:to_do_list/providers/task_provider.dart';
 import 'package:to_do_list/screens/splash_screen.dart';
 import 'package:to_do_list/utils/colors.dart';
 import 'package:to_do_list/firebase_options.dart';
@@ -11,7 +14,15 @@ void main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
-  runApp(const MyApp());
+  runApp(
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => CounterProvider()),
+        ChangeNotifierProvider(create: (_) => TaskProvider()),
+      ],
+      child: const MyApp(),
+    ),
+  );
 }
 
 // the main application widget.

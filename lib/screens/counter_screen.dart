@@ -1,62 +1,22 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:provider/provider.dart';
+import 'package:to_do_list/providers/counter_provider.dart';
 import 'package:to_do_list/utils/colors.dart';
-import 'package:to_do_list/utils/session_manager.dart';
 
-class CounterScreen extends StatefulWidget {
+class CounterScreen extends StatelessWidget {
   const CounterScreen({super.key});
 
   @override
-  State<CounterScreen> createState() => _CounterScreenState();
-}
-
-class _CounterScreenState extends State<CounterScreen> {
-  int _counter = 0;
-
-  final _storage = const FlutterSecureStorage();
-  String get _key => 'counter_value_${SessionManager().currentEmail ?? 'default'}';
-
-  @override
-  void initState() {
-    super.initState();
-    _loadCounter();
-  }
-
-  Future<void> _loadCounter() async {
-    final valStr = await _storage.read(key: _key);
-    setState(() {
-      _counter = valStr != null ? int.parse(valStr) : 0;
-    });
-  }
-
-  Future<void> _saveCounter(int value) async {
-    await _storage.write(key: _key, value: value.toString());
-  }
-
-  void _increment() {
-    setState(() => _counter++);
-    _saveCounter(_counter);
-  }
-
-  void _decrement() {
-    setState(() => _counter--);
-    _saveCounter(_counter);
-  }
-
-  void _reset() {
-    setState(() => _counter = 0);
-    _saveCounter(0);
-  }
-
-  @override
   Widget build(BuildContext context) {
+    final provider = context.watch<CounterProvider>();
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Counter'),
         actions: [
-          if (_counter != 0)
+          if (provider.counter != 0)
             TextButton(
-              onPressed: _reset,
+              onPressed: provider.reset,
               child: const Text(
                 'Reset',
                 style: TextStyle(color: AppColors.textSecondary, fontSize: 14),
@@ -69,13 +29,13 @@ class _CounterScreenState extends State<CounterScreen> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text(
-              '$_counter',
+              '${provider.counter}',
               style: TextStyle(
                 fontSize: 96,
                 fontWeight: FontWeight.w200,
-                color: _counter > 0
+                color: provider.counter > 0
                     ? AppColors.success
-                    : _counter < 0
+                    : provider.counter < 0
                         ? AppColors.error
                         : AppColors.textPrimary,
                 height: 1,
@@ -88,12 +48,12 @@ class _CounterScreenState extends State<CounterScreen> {
               children: [
                 _buildButton(
                   icon: Icons.remove_rounded,
-                  onTap: _decrement,
+                  onTap: provider.decrement,
                 ),
                 const SizedBox(width: 32),
                 _buildButton(
                   icon: Icons.add_rounded,
-                  onTap: _increment,
+                  onTap: provider.increment,
                 ),
               ],
             ),

@@ -1,8 +1,10 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:provider/provider.dart';
+import 'package:to_do_list/models/task_item.dart';
+import 'package:to_do_list/providers/task_provider.dart';
 import 'package:to_do_list/screens/counter_screen.dart';
 import 'package:to_do_list/screens/login_screen.dart';
 import 'package:to_do_list/screens/users_screen.dart';
@@ -22,12 +24,11 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen>
     with SingleTickerProviderStateMixin {
-  List<_Task> _tasks = [];
   late final AnimationController _emptyAnimController;
   late final Animation<double> _emptyPulse;
   late final Animation<Offset> _emptySlide;
 
-  // Search & filter
+  // Search & filter (local UI state — stays in setState)
   _TaskFilter _filter = _TaskFilter.all;
   String _searchQuery = '';
   bool _isSearchOpen = false;
@@ -35,8 +36,6 @@ class _HomeScreenState extends State<HomeScreen>
 
   // Onboarding
   bool _onboardingShown = false;
-
-  String get _tasksKey => 'tasks_${SessionManager().currentEmail ?? 'default'}';
   String get _onboardingKey => 'onboarding_shown_${SessionManager().currentEmail ?? 'default'}';
   final _storage = const FlutterSecureStorage();
 
@@ -51,7 +50,6 @@ class _HomeScreenState extends State<HomeScreen>
   void initState() {
     super.initState();
     NotificationService().init();
-    _loadTasks();
     _checkOnboarding();
 
     _emptyAnimController = AnimationController(
@@ -85,7 +83,8 @@ class _HomeScreenState extends State<HomeScreen>
   }
 
   Future<void> _maybeShowOnboarding() async {
-    if (!_onboardingShown && _tasks.length == 1) {
+    final tasks = context.read<TaskProvider>().tasks;
+    if (!_onboardingShown && tasks.length == 1) {
       _onboardingShown = true;
       await _storage.write(key: _onboardingKey, value: 'true');
       Future.delayed(const Duration(milliseconds: 600), () {
@@ -172,76 +171,23 @@ class _HomeScreenState extends State<HomeScreen>
     );
   }
 
-  // ── Persistence ────────────────────────────────────────────────────────────
-
-  Future<void> _loadTasks() async {
-    final raw = await _storage.read(key: _tasksKey);
-    if (raw != null) {
-      final List decoded = jsonDecode(raw) as List;
-      setState(() {
-        _tasks = decoded
-            .map((e) => _Task.fromJson(e as Map<String, dynamic>))
-            .toList();
-      });
-    }
-  }
-
-  Future<void> _saveTasks() async {
-    await _storage.write(
-      key: _tasksKey,
-      value: jsonEncode(_tasks.map((t) => t.toJson()).toList()),
-    );
-  }
-
-  // ── Task operations ────────────────────────────────────────────────────────
+  // ── Provider-backed task operations ───────────────────────────────────────
 
   void _addTask(String title, DateTime? dueDate, {String category = 'none'}) {
-    final task = _Task(title: title.trim(), dueDate: dueDate, category: category);
-    setState(() {
-      _tasks.add(task);
-    });
-    _saveTasks();
+    context.read<TaskProvider>().addTask(title, dueDate, category: category);
     _maybeShowOnboarding();
-
-    // Schedule notification if due date is set and in the future
-    if (dueDate != null && dueDate.isAfter(DateTime.now())) {
-      NotificationService().scheduleTaskReminder(
-        id: task.hashCode,
-        title: task.title,
-        scheduledDate: dueDate,
-      );
-    }
   }
 
   void _toggleTask(int index) {
     HapticFeedback.lightImpact();
-    final task = _tasks[index];
-    final nowDone = !task.done;
-    setState(() {
-      _tasks[index] = task.copyWith(done: nowDone);
-    });
-    _saveTasks();
-
-    // Cancel notification when completed
-    if (nowDone) {
-      NotificationService().cancel(task.hashCode);
-    } else if (task.dueDate != null && task.dueDate!.isAfter(DateTime.now())) {
-      NotificationService().scheduleTaskReminder(
-        id: task.hashCode,
-        title: task.title,
-        scheduledDate: task.dueDate!,
-      );
-    }
+    context.read<TaskProvider>().toggleTask(index);
   }
 
   void _deleteTask(int index) {
     HapticFeedback.mediumImpact();
-    final removed = _tasks[index];
-    setState(() {
-      _tasks.removeAt(index);
-    });
-    _saveTasks();
-    NotificationService().cancel(removed.hashCode);
+    final taskProvider = context.read<TaskProvider>();
+    final removed = taskProvider.tasks[index];
+    taskProvider.deleteTask(index);
 
     ScaffoldMessenger.of(context).clearSnackBars();
     ScaffoldMessenger.of(context).showSnackBar(
@@ -254,19 +200,7 @@ class _HomeScreenState extends State<HomeScreen>
           label: 'Undo',
           textColor: AppColors.accent,
           onPressed: () {
-            setState(() {
-              _tasks.insert(index, removed);
-            });
-            _saveTasks();
-            if (removed.dueDate != null &&
-                removed.dueDate!.isAfter(DateTime.now()) &&
-                !removed.done) {
-              NotificationService().scheduleTaskReminder(
-                id: removed.hashCode,
-                title: removed.title,
-                scheduledDate: removed.dueDate!,
-              );
-            }
+            context.read<TaskProvider>().restoreTask(index, removed);
           },
         ),
       ),
@@ -544,9 +478,12 @@ class _HomeScreenState extends State<HomeScreen>
 
   @override
   Widget build(BuildContext context) {
+    // Read tasks from Provider (rebuilds when tasks change)
+    final allTasks = context.watch<TaskProvider>().tasks;
+
     // Apply search + filter
-    var allPending = _tasks.where((t) => !t.done).toList();
-    var allCompleted = _tasks.where((t) => t.done).toList();
+    var allPending = allTasks.where((t) => !t.done).toList();
+    var allCompleted = allTasks.where((t) => t.done).toList();
 
     if (_searchQuery.isNotEmpty) {
       final q = _searchQuery.toLowerCase();
@@ -556,11 +493,11 @@ class _HomeScreenState extends State<HomeScreen>
 
     final showPending = _filter != _TaskFilter.completed;
     final showCompleted = _filter != _TaskFilter.pending;
-    final pending = showPending ? allPending : <_Task>[];
-    final completed = showCompleted ? allCompleted : <_Task>[];
+    final pending = showPending ? allPending : <TaskItem>[];
+    final completed = showCompleted ? allCompleted : <TaskItem>[];
 
-    final total = _tasks.length;
-    final doneCount = _tasks.where((t) => t.done).length;
+    final total = allTasks.length;
+    final doneCount = allTasks.where((t) => t.done).length;
     final progress = total == 0 ? 0.0 : doneCount / total;
 
     return Scaffold(
@@ -723,7 +660,7 @@ class _HomeScreenState extends State<HomeScreen>
                 SliverList(
                   delegate: SliverChildBuilderDelegate(
                     (ctx, i) {
-                      final realIndex = _tasks.indexOf(pending[i]);
+                      final realIndex = allTasks.indexOf(pending[i]);
                       return Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 16),
                         child: Dismissible(
@@ -798,7 +735,7 @@ class _HomeScreenState extends State<HomeScreen>
                 SliverList(
                   delegate: SliverChildBuilderDelegate(
                     (ctx, i) {
-                      final realIndex = _tasks.indexOf(completed[i]);
+                      final realIndex = allTasks.indexOf(completed[i]);
                       return Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 16),
                         child: Dismissible(
@@ -1035,49 +972,10 @@ class _ProgressCard extends StatelessWidget {
   }
 }
 
-// ── Task model ───────────────────────────────────────────────────────────────
-
-class _Task {
-  final String title;
-  final bool done;
-  final DateTime? dueDate;
-  final String category;
-
-  const _Task({
-    required this.title,
-    this.done = false,
-    this.dueDate,
-    this.category = 'none',
-  });
-
-  _Task copyWith({String? title, bool? done, DateTime? dueDate, String? category}) => _Task(
-        title: title ?? this.title,
-        done: done ?? this.done,
-        dueDate: dueDate ?? this.dueDate,
-        category: category ?? this.category,
-      );
-
-  Map<String, dynamic> toJson() => {
-        'title': title,
-        'done': done,
-        'dueDate': dueDate?.toIso8601String(),
-        'category': category,
-      };
-
-  factory _Task.fromJson(Map<String, dynamic> json) => _Task(
-        title: json['title'] as String,
-        done: json['done'] as bool,
-        dueDate: json['dueDate'] != null
-            ? DateTime.parse(json['dueDate'] as String)
-            : null,
-        category: (json['category'] as String?) ?? 'none',
-      );
-}
-
 // ── Task tile widget ─────────────────────────────────────────────────────────
 
 class _TaskTile extends StatelessWidget {
-  final _Task task;
+  final TaskItem task;
   final VoidCallback onToggle;
   final VoidCallback onDelete;
 
@@ -1255,4 +1153,3 @@ class _TaskTile extends StatelessWidget {
     );
   }
 }
-

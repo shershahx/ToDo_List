@@ -71,6 +71,13 @@ A feature-rich task management application built with Flutter over a three-week 
 - **Password Reset:** Replaced local two-step recovery with real Firebase "Send Password Reset Email" flow.
 - **Google Sign-In Sync:** Ensures Google-authenticated users also sync their profiles directly into Firestore Database.
 
+### Week 6 — State Management with Provider
+- **Provider Integration:** Refactored entire app state from `setState` to the `Provider` package using `ChangeNotifier`.
+- **TaskProvider:** Centralized task management (add, toggle, delete, undo/restore) with automatic persistence and notification scheduling.
+- **CounterProvider:** Extracted counter logic into a dedicated provider; `CounterScreen` is now a fully stateless widget.
+- **Architecture Improvement:** Separated `TaskItem` model into its own file. Business logic is fully decoupled from the UI layer.
+- **Performance Optimization:** Only affected widgets rebuild on state changes, reducing unnecessary full-screen re-renders.
+
 ## Demo Credentials
 
 > **Note:** Demo credentials were removed in Week 5 as all authentication was migrated to real Firebase Auth. Please create your own account via **Sign Up**, or tap **Continue with Google**.
@@ -79,19 +86,30 @@ A feature-rich task management application built with Flutter over a three-week 
 
 ```
 lib/
-├── main.dart                      — App entry point, Firebase init, dark theme
+├── main.dart                      — App entry point, Firebase init, MultiProvider
+├── models/
+│   ├── task_item.dart             — TaskItem data model (title, done, dueDate, category)
+│   ├── user.dart                  — User model for API data
+│   └── post.dart                  — Post model for API data
+├── providers/
+│   ├── task_provider.dart         — ChangeNotifier for task state management
+│   └── counter_provider.dart      — ChangeNotifier for counter state management
 ├── screens/
 │   ├── splash_screen.dart         — Launch screen, checks session on startup
-│   ├── login_screen.dart          — Login with email/password + Google Sign-In
-│   ├── signup_screen.dart         — Registration + Google Sign-In
-│   ├── home_screen.dart           — To-do list with search, filters, categories, swipe
-│   └── counter_screen.dart        — Counter app (setState + secure storage)
+│   ├── login_screen.dart          — Login with Firebase Auth + Google Sign-In
+│   ├── signup_screen.dart         — Registration with Firebase Auth + Firestore
+│   ├── home_screen.dart           — To-do list with Provider, search, filters, swipe
+│   ├── counter_screen.dart        — Counter app (StatelessWidget + Provider)
+│   ├── users_screen.dart          — API users list from JSONPlaceholder
+│   └── user_detail_screen.dart    — User detail with posts from API
+├── services/
+│   └── api_service.dart           — HTTP client for JSONPlaceholder API
 └── utils/
     ├── colors.dart                — Centralized dark-mode color palette + category colors
     ├── validators.dart            — Reusable form validators
-    ├── user_store.dart            — Encrypted user registry (email/password auth)
-    ├── session_manager.dart       — Secure session persistence (email + Google method)
-    ├── google_auth_service.dart   — Google Sign-In + Firebase Auth wrapper
+    ├── user_store.dart            — Firebase Auth + Firestore user profiles
+    ├── session_manager.dart       — FirebaseAuth-based session persistence
+    ├── google_auth_service.dart   — Google Sign-In + Firebase Auth + Firestore
     ├── notification_service.dart  — Local notification scheduling & cancellation
     └── page_transitions.dart      — Reusable fade + slide-up page transition
 ```
@@ -121,6 +139,7 @@ lib/
 | `cloud_firestore`             | Cloud Firestore for user profile database        |
 | `google_sign_in`              | Native Google Sign-In flow                       |
 | `http`                        | Network requests for external API integration    |
+| `provider`                    | State management via ChangeNotifier + Consumer   |
 | `flutter_secure_storage`      | Encrypted storage for tasks, session & counter   |
 | `shared_preferences`          | Lightweight local key-value persistence          |
 | `flutter_local_notifications` | Schedule and cancel due-date reminders           |
@@ -162,6 +181,11 @@ lib/
 - Integrate Firebase Authentication for Email/Password signups and logins.
 - Connect a Flutter app to Firebase Cloud Firestore.
 - Manage users and store attributes using NoSQL databases.
+
+**Week 6**
+- Refactor app state from `setState` to Provider (`ChangeNotifier`).
+- Apply state management best practices: separation of business logic from UI.
+- Optimize performance by minimizing unnecessary widget rebuilds.
 
 ## Deadline
 **11th April, 2026**
