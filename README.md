@@ -60,14 +60,20 @@ A feature-rich task management application built with Flutter over a three-week 
 - **Security Refactor:** Migrated all persistent data (tasks, session, counter, onboarding) from `SharedPreferences` to `flutter_secure_storage` for encrypted, tamper-resistant storage.
 - **Testing & Debugging:** Verified navigation flow, data persistence, notification scheduling, and edge cases using Flutter DevTools.
 
+### Week 4 — API & Network Requests
+- **API Integration:** Integrated `http` package to fetch real live data from the JSONPlaceholder API.
+- **JSON Parsing:** Parsed nested complex JSON models `User` and `Post` into typed Dart objects.
+- **Error Handling:** Added exception handling and UI feedback for failed network requests.
+
+### Week 5 — Firebase Auth & Firestore
+- **Firebase Authentication:** Completely replaced local mock authentication with real Firebase Email & Password Authentication.
+- **Cloud Firestore:** Implemented Cloud Firestore to persist user profiles (name, email, creation date) securely in the cloud.
+- **Password Reset:** Replaced local two-step recovery with real Firebase "Send Password Reset Email" flow.
+- **Google Sign-In Sync:** Ensures Google-authenticated users also sync their profiles directly into Firestore Database.
+
 ## Demo Credentials
 
-| Field    | Value              |
-| -------- | ------------------ |
-| Email    | `demo@todoapp.com` |
-| Password | `Demo@1234`        |
-
-Or create your own account via **Sign Up**, or tap **Continue with Google**.
+> **Note:** Demo credentials were removed in Week 5 as all authentication was migrated to real Firebase Auth. Please create your own account via **Sign Up**, or tap **Continue with Google**.
 
 ## Project Structure
 
@@ -111,8 +117,10 @@ lib/
 | Package                       | Purpose                                          |
 | ----------------------------- | ------------------------------------------------ |
 | `firebase_core`               | Firebase SDK initialization                      |
-| `firebase_auth`               | Firebase Authentication (Google Sign-In backend) |
+| `firebase_auth`               | Email/Password login + Google Sign-In backend    |
+| `cloud_firestore`             | Cloud Firestore for user profile database        |
 | `google_sign_in`              | Native Google Sign-In flow                       |
+| `http`                        | Network requests for external API integration    |
 | `flutter_secure_storage`      | Encrypted storage for tasks, session & counter   |
 | `shared_preferences`          | Lightweight local key-value persistence          |
 | `flutter_local_notifications` | Schedule and cancel due-date reminders           |
@@ -145,8 +153,18 @@ lib/
 - Implement search, filter, and swipe gestures for a native-feeling UX.
 - Migrate to encrypted storage (`flutter_secure_storage`) for security compliance.
 
+**Week 4**
+- Integrate REST APIs using the `http` package.
+- Parse JSON data into Dart models securely.
+- Handle network errors and edge cases gracefully.
+
+**Week 5**
+- Integrate Firebase Authentication for Email/Password signups and logins.
+- Connect a Flutter app to Firebase Cloud Firestore.
+- Manage users and store attributes using NoSQL databases.
+
 ## Deadline
-**23rd March, 2026**
+**11th April, 2026**
 
 ## Bonus Challenges Completed
 - ✅ Splash screen with session-aware routing
