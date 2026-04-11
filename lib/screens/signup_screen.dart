@@ -1,7 +1,7 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:to_do_list/screens/home_screen.dart';
-import 'package:to_do_list/screens/login_screen.dart';
 import 'package:to_do_list/utils/colors.dart';
 import 'package:to_do_list/utils/google_auth_service.dart';
 import 'package:to_do_list/utils/page_transitions.dart';
@@ -26,6 +26,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
   bool _obscurePassword = true;
   bool _obscureConfirm = true;
   bool _isGoogleLoading = false;
+  bool _isLoading = false;
 
   @override
   void dispose() {
@@ -38,41 +39,63 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
   Future<void> _handleSignUp() async {
     if (_formKey.currentState!.validate()) {
+      setState(() => _isLoading = true);
+
+      final name = _nameController.text.trim();
       final email = _emailController.text.trim();
       final password = _passwordController.text;
 
-      // Check if this email is already taken
-      if (await UserStore().emailExists(email)) {
+      try {
+        // Register via Firebase Auth + write profile to Firestore
+        await UserStore().register(name, email, password);
+
         if (!mounted) return;
+
+        // Save session and navigate to home
+        await SessionManager().saveSession(email, method: 'email');
+        if (!mounted) return;
+
+        Navigator.pushReplacement(
+          context,
+          FadeSlideRoute(page: const HomeScreen()),
+        );
+      } on FirebaseAuthException catch (e) {
+        if (!mounted) return;
+        setState(() => _isLoading = false);
+
+        String message;
+        switch (e.code) {
+          case 'email-already-in-use':
+            message = 'An account with this email already exists.';
+            break;
+          case 'weak-password':
+            message = 'Password is too weak. Use at least 6 characters.';
+            break;
+          case 'invalid-email':
+            message = 'Invalid email address.';
+            break;
+          default:
+            message = e.message ?? 'Sign up failed. Please try again.';
+        }
+
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: const Text('An account with this email already exists'),
+            content: Text(message),
             backgroundColor: AppColors.error,
             behavior: SnackBarBehavior.floating,
           ),
         );
-        return;
-      }
-
-      // Save the new account
-      await UserStore().register(email, password);
-
-      if (!mounted) return;
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('Account created successfully!'),
-          backgroundColor: AppColors.success,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10),
+      } catch (e) {
+        if (!mounted) return;
+        setState(() => _isLoading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Something went wrong. Please try again.'),
+            backgroundColor: AppColors.error,
+            behavior: SnackBarBehavior.floating,
           ),
-        ),
-      );
-      Navigator.pushReplacement(
-        context,
-        FadeSlideRoute(page: const LoginScreen()),
-      );
+        );
+      }
     }
   }
 
@@ -249,7 +272,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 const SizedBox(height: 28.0),
 
                 ElevatedButton(
-                  onPressed: _handleSignUp,
+                  onPressed: _isLoading ? null : _handleSignUp,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primary,
                     foregroundColor: Colors.white,
@@ -262,7 +285,16 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       fontWeight: FontWeight.w600,
                     ),
                   ),
-                  child: const Text('Sign Up'),
+                  child: _isLoading
+                      ? const SizedBox(
+                          width: 22,
+                          height: 22,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                      : const Text('Sign Up'),
                 ),
                 const SizedBox(height: 16.0),
 

@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:to_do_list/screens/home_screen.dart';
 import 'package:to_do_list/screens/signup_screen.dart';
@@ -21,10 +22,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final _passwordController = TextEditingController();
   bool _obscurePassword = true;
   bool _isGoogleLoading = false;
-
-  // demo credentials — for quick testing without creating an account
-  static const String _demoEmail = 'demo@todoapp.com';
-  static const String _demoPassword = 'Demo@1234';
+  bool _isLoading = false;
 
   @override
   void dispose() {
@@ -37,41 +35,64 @@ class _LoginScreenState extends State<LoginScreen> {
     showDialog(
       context: context,
       barrierDismissible: true,
-      builder: (_) => _ForgotPasswordDialog(demoEmail: _demoEmail),
-    ).then((resetSucceeded) {
-      if (resetSucceeded == true && mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('Password reset successfully. Please sign in.'),
-            backgroundColor: AppColors.success,
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-      }
-    });
+      builder: (_) => const _ForgotPasswordDialog(),
+    );
   }
 
   Future<void> _handleLogin() async {
     if (_formKey.currentState!.validate()) {
+      setState(() => _isLoading = true);
+
       final email = _emailController.text.trim();
       final password = _passwordController.text;
 
-      // Check against demo account OR any registered user account
-      final isDemoMatch = email == _demoEmail && password == _demoPassword;
-      final isRegisteredUser = await UserStore().authenticate(email, password);
+      try {
+        await UserStore().authenticate(email, password);
 
-      if (isDemoMatch || isRegisteredUser) {
+        if (!mounted) return;
         await SessionManager().saveSession(email, method: 'email');
         if (!mounted) return;
+
         Navigator.pushReplacement(
           context,
           FadeSlideRoute(page: const HomeScreen()),
         );
-      } else {
+      } on FirebaseAuthException catch (e) {
         if (!mounted) return;
+        setState(() => _isLoading = false);
+
+        String message;
+        switch (e.code) {
+          case 'user-not-found':
+            message = 'No account found with this email.';
+            break;
+          case 'wrong-password':
+          case 'invalid-credential':
+            message = 'Invalid email or password.';
+            break;
+          case 'too-many-requests':
+            message = 'Too many attempts. Please try again later.';
+            break;
+          case 'user-disabled':
+            message = 'This account has been disabled.';
+            break;
+          default:
+            message = e.message ?? 'Login failed. Please try again.';
+        }
+
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: const Text('Invalid email or password'),
+            content: Text(message),
+            backgroundColor: AppColors.error,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      } catch (e) {
+        if (!mounted) return;
+        setState(() => _isLoading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Something went wrong. Please try again.'),
             backgroundColor: AppColors.error,
             behavior: SnackBarBehavior.floating,
           ),
@@ -220,7 +241,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
                 // login button
                 ElevatedButton(
-                  onPressed: _handleLogin,
+                  onPressed: _isLoading ? null : _handleLogin,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primary,
                     foregroundColor: Colors.white,
@@ -233,7 +254,16 @@ class _LoginScreenState extends State<LoginScreen> {
                       fontWeight: FontWeight.w600,
                     ),
                   ),
-                  child: const Text('Login'),
+                  child: _isLoading
+                      ? const SizedBox(
+                          width: 22,
+                          height: 22,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                      : const Text('Login'),
                 ),
                 const SizedBox(height: 20.0),
 
@@ -346,9 +376,9 @@ class _LoginScreenState extends State<LoginScreen> {
 }
 
 
+/// Forgot Password dialog — sends a Firebase password reset email.
 class _ForgotPasswordDialog extends StatefulWidget {
-  const _ForgotPasswordDialog({required this.demoEmail});
-  final String demoEmail;
+  const _ForgotPasswordDialog();
 
   @override
   State<_ForgotPasswordDialog> createState() => _ForgotPasswordDialogState();
@@ -356,181 +386,96 @@ class _ForgotPasswordDialog extends StatefulWidget {
 
 class _ForgotPasswordDialogState extends State<_ForgotPasswordDialog> {
   final _emailFormKey = GlobalKey<FormState>();
-  final _passFormKey = GlobalKey<FormState>();
   final _emailCtrl = TextEditingController();
-  final _newPassCtrl = TextEditingController();
-  final _confirmPassCtrl = TextEditingController();
-
-  int _step = 1;
-  String _verifiedEmail = '';
-  bool _obscureNew = true;
-  bool _obscureConfirm = true;
+  bool _isSending = false;
 
   @override
   void dispose() {
     _emailCtrl.dispose();
-    _newPassCtrl.dispose();
-    _confirmPassCtrl.dispose();
     super.dispose();
   }
 
-  Future<void> _onContinue() async {
+  Future<void> _onSendResetEmail() async {
     if (!_emailFormKey.currentState!.validate()) return;
-    final email = _emailCtrl.text.trim();
-    if (email.toLowerCase() == widget.demoEmail) {
+
+    setState(() => _isSending = true);
+
+    try {
+      await UserStore().sendPasswordResetEmail(_emailCtrl.text.trim());
+
+      if (!mounted) return;
       Navigator.pop(context);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: const Text('Demo account password cannot be reset.'),
-          backgroundColor: AppColors.error,
+          content: const Text('Password reset email sent. Check your inbox.'),
+          backgroundColor: AppColors.success,
           behavior: SnackBarBehavior.floating,
         ),
       );
-      return;
-    }
-    final exists = await UserStore().emailExists(email);
-    if (!exists) {
+    } on FirebaseAuthException catch (e) {
       if (!mounted) return;
+      setState(() => _isSending = false);
+
+      String message;
+      switch (e.code) {
+        case 'user-not-found':
+          message = 'No account found with this email.';
+          break;
+        default:
+          message = e.message ?? 'Failed to send reset email.';
+      }
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: const Text('No account found with this email.'),
+          content: Text(message),
           backgroundColor: AppColors.error,
           behavior: SnackBarBehavior.floating,
         ),
       );
-      return;
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _isSending = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Something went wrong. Please try again.'),
+          backgroundColor: AppColors.error,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
     }
-    setState(() {
-      _verifiedEmail = email;
-      _step = 2;
-    });
-  }
-
-  void _onReset() {
-    if (!_passFormKey.currentState!.validate()) return;
-    UserStore().updatePassword(_verifiedEmail, _newPassCtrl.text);
-    Navigator.pop(context, true);
   }
 
   @override
   Widget build(BuildContext context) {
-    if (_step == 1) {
-      return AlertDialog(
-        backgroundColor: AppColors.card,
-        shape:
-            RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text(
-          'Reset Password',
-          style: TextStyle(
-              color: AppColors.textPrimary, fontWeight: FontWeight.bold),
-        ),
-        content: Form(
-          key: _emailFormKey,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Text(
-                'Enter the email address linked to your account.',
-                style:
-                    TextStyle(color: AppColors.textSecondary, fontSize: 13),
-              ),
-              const SizedBox(height: 16),
-              TextFormField(
-                controller: _emailCtrl,
-                keyboardType: TextInputType.emailAddress,
-                style: const TextStyle(color: AppColors.textPrimary),
-                decoration: const InputDecoration(
-                  labelText: 'Email',
-                  prefixIcon: Icon(Icons.email_outlined),
-                ),
-                validator: FormValidators.validateEmail,
-              ),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            style:
-                TextButton.styleFrom(foregroundColor: AppColors.textSecondary),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: _onContinue,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primary,
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8)),
-            ),
-            child: const Text('Continue'),
-          ),
-        ],
-      );
-    }
-
     return AlertDialog(
       backgroundColor: AppColors.card,
       shape:
           RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       title: const Text(
-        'Set New Password',
+        'Reset Password',
         style: TextStyle(
             color: AppColors.textPrimary, fontWeight: FontWeight.bold),
       ),
       content: Form(
-        key: _passFormKey,
+        key: _emailFormKey,
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            TextFormField(
-              controller: _newPassCtrl,
-              obscureText: _obscureNew,
-              style: const TextStyle(color: AppColors.textPrimary),
-              decoration: InputDecoration(
-                labelText: 'New Password',
-                prefixIcon: const Icon(Icons.lock_outline),
-                suffixIcon: IconButton(
-                  icon: Icon(
-                    _obscureNew
-                        ? Icons.visibility_off_outlined
-                        : Icons.visibility_outlined,
-                    color: AppColors.textSecondary,
-                  ),
-                  onPressed: () =>
-                      setState(() => _obscureNew = !_obscureNew),
-                ),
-              ),
-              validator: FormValidators.validatePassword,
+            const Text(
+              'Enter your email and we\'ll send you a link to reset your password.',
+              style:
+                  TextStyle(color: AppColors.textSecondary, fontSize: 13),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 16),
             TextFormField(
-              controller: _confirmPassCtrl,
-              obscureText: _obscureConfirm,
+              controller: _emailCtrl,
+              keyboardType: TextInputType.emailAddress,
               style: const TextStyle(color: AppColors.textPrimary),
-              decoration: InputDecoration(
-                labelText: 'Confirm Password',
-                prefixIcon: const Icon(Icons.lock_outline),
-                suffixIcon: IconButton(
-                  icon: Icon(
-                    _obscureConfirm
-                        ? Icons.visibility_off_outlined
-                        : Icons.visibility_outlined,
-                    color: AppColors.textSecondary,
-                  ),
-                  onPressed: () =>
-                      setState(() => _obscureConfirm = !_obscureConfirm),
-                ),
+              decoration: const InputDecoration(
+                labelText: 'Email',
+                prefixIcon: Icon(Icons.email_outlined),
               ),
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Please confirm your password';
-                }
-                if (value != _newPassCtrl.text) {
-                  return 'Passwords do not match';
-                }
-                return null;
-              },
+              validator: FormValidators.validateEmail,
             ),
           ],
         ),
@@ -543,14 +488,23 @@ class _ForgotPasswordDialogState extends State<_ForgotPasswordDialog> {
           child: const Text('Cancel'),
         ),
         ElevatedButton(
-          onPressed: _onReset,
+          onPressed: _isSending ? null : _onSendResetEmail,
           style: ElevatedButton.styleFrom(
             backgroundColor: AppColors.primary,
             foregroundColor: Colors.white,
             shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(8)),
           ),
-          child: const Text('Reset Password'),
+          child: _isSending
+              ? const SizedBox(
+                  width: 18,
+                  height: 18,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: Colors.white,
+                  ),
+                )
+              : const Text('Send Reset Email'),
         ),
       ],
     );

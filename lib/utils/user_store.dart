@@ -1,60 +1,98 @@
-import 'dart:convert';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+/// Firebase-backed user authentication and Firestore profile storage.
+///
+/// Replaces the old local encrypted KV store with:
+/// - [FirebaseAuth] for email/password registration, login, and password reset.
+/// - [Cloud Firestore] for persisting user profile data (name, email).
+library;
 
-// Secure user store for registered accounts.
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+
 class UserStore {
   static final UserStore _instance = UserStore._internal();
   factory UserStore() => _instance;
   UserStore._internal();
 
-  final _storage = const FlutterSecureStorage();
-  static const String _usersKey = 'secure_users';
+  final _auth = FirebaseAuth.instance;
+  final _firestore = FirebaseFirestore.instance;
 
-  // email → password mapping
-  Map<String, String> _users = {};
-  bool _initialized = false;
+  /// The currently signed-in Firebase user, or `null`.
+  User? get currentUser => _auth.currentUser;
 
-  Future<void> init() async {
-    if (_initialized) return;
-    final data = await _storage.read(key: _usersKey);
-    if (data != null) {
-      try {
-        final decoded = jsonDecode(data) as Map<String, dynamic>;
-        _users = decoded.map((key, value) => MapEntry(key, value.toString()));
-      } catch (_) {
-        _users = {};
-      }
-    }
-    _initialized = true;
+  // ── Registration ──────────────────────────────────────────────────────────
+
+  /// Creates a new account with [email] and [password], then writes a profile
+  /// document to Firestore `users/{uid}` containing the user's [name] and
+  /// [email].
+  ///
+  /// Throws [FirebaseAuthException] on failure (e.g. email-already-in-use).
+  Future<void> register(String name, String email, String password) async {
+    final credential = await _auth.createUserWithEmailAndPassword(
+      email: email.trim(),
+      password: password,
+    );
+
+    final uid = credential.user!.uid;
+
+    // Store profile in Firestore
+    await _firestore.collection('users').doc(uid).set({
+      'name': name.trim(),
+      'email': email.trim(),
+      'createdAt': FieldValue.serverTimestamp(),
+    });
+
+    // Also set the display name on the Firebase Auth profile
+    await credential.user!.updateDisplayName(name.trim());
   }
 
-  Future<void> _save() async {
-    await _storage.write(key: _usersKey, value: jsonEncode(_users));
+  // ── Authentication ────────────────────────────────────────────────────────
+
+  /// Signs in with [email] and [password].
+  ///
+  /// Throws [FirebaseAuthException] on failure (e.g. wrong-password).
+  Future<void> authenticate(String email, String password) async {
+    await _auth.signInWithEmailAndPassword(
+      email: email.trim(),
+      password: password,
+    );
   }
 
-  Future<void> register(String email, String password) async {
-    await init();
-    _users[email.trim().toLowerCase()] = password;
-    await _save();
+  // ── Password Reset ────────────────────────────────────────────────────────
+
+  /// Sends a password reset email to [email] via Firebase.
+  Future<void> sendPasswordResetEmail(String email) async {
+    await _auth.sendPasswordResetEmail(email: email.trim());
   }
 
-  Future<bool> authenticate(String email, String password) async {
-    await init();
-    final key = email.trim().toLowerCase();
-    return _users.containsKey(key) && _users[key] == password;
+  // ── Firestore Profile ─────────────────────────────────────────────────────
+
+  /// Returns the Firestore profile for the currently logged-in user.
+  ///
+  /// Returns `null` if no user is logged in or the document doesn't exist.
+  Future<Map<String, dynamic>?> getCurrentUserProfile() async {
+    final user = _auth.currentUser;
+    if (user == null) return null;
+
+    final doc = await _firestore.collection('users').doc(user.uid).get();
+    return doc.exists ? doc.data() : null;
   }
 
-  Future<bool> emailExists(String email) async {
-    await init();
-    return _users.containsKey(email.trim().toLowerCase());
-  }
+  /// Writes or merges a profile document for a user (used by Google Sign-In
+  /// to create a Firestore profile on first login).
+  Future<void> ensureProfile({
+    required String uid,
+    required String name,
+    required String email,
+  }) async {
+    final docRef = _firestore.collection('users').doc(uid);
+    final doc = await docRef.get();
 
-  Future<void> updatePassword(String email, String newPassword) async {
-    await init();
-    final key = email.trim().toLowerCase();
-    if (_users.containsKey(key)) {
-      _users[key] = newPassword;
-      await _save();
+    if (!doc.exists) {
+      await docRef.set({
+        'name': name,
+        'email': email,
+        'createdAt': FieldValue.serverTimestamp(),
+      });
     }
   }
 }

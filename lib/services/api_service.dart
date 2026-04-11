@@ -1,6 +1,4 @@
-import 'dart:async';
 import 'dart:convert';
-import 'dart:io';
 import 'package:http/http.dart' as http;
 import '../models/user.dart';
 import '../models/post.dart';
@@ -15,49 +13,46 @@ class ApiException implements Exception {
 
 class ApiService {
   static const String _baseUrl = 'https://jsonplaceholder.typicode.com';
-  static const Duration _timeout = Duration(seconds: 10);
 
+  /// Fetches all users from the JSONPlaceholder API.
   Future<List<User>> fetchUsers() async {
     try {
-      final response = await http
-          .get(Uri.parse('$_baseUrl/users'))
-          .timeout(_timeout);
+      final response = await http.get(Uri.parse('$_baseUrl/users'));
 
       if (response.statusCode == 200) {
-        final List<dynamic> data = jsonDecode(response.body);
-        return data.map((json) => User.fromJson(json)).toList();
+        final List<dynamic> jsonList = json.decode(response.body);
+        return jsonList.map((json) => User.fromJson(json)).toList();
       } else {
-        throw ApiException('Server error: ${response.statusCode}');
+        throw ApiException(
+          'Failed to load users (status ${response.statusCode})',
+        );
       }
-    } on SocketException {
-      throw ApiException('No internet connection. Please check your network.');
-    } on TimeoutException {
-      throw ApiException('Request timed out. Please try again.');
+    } on ApiException {
+      rethrow;
     } catch (e) {
-      if (e is ApiException) rethrow;
-      throw ApiException('Something went wrong. Please try again.');
+      throw ApiException('Network error: Could not reach the server.');
     }
   }
 
+  /// Fetches all posts for a given [userId] from the JSONPlaceholder API.
   Future<List<Post>> fetchUserPosts(int userId) async {
     try {
-      final response = await http
-          .get(Uri.parse('$_baseUrl/posts?userId=$userId'))
-          .timeout(_timeout);
+      final response = await http.get(
+        Uri.parse('$_baseUrl/users/$userId/posts'),
+      );
 
       if (response.statusCode == 200) {
-        final List<dynamic> data = jsonDecode(response.body);
-        return data.map((json) => Post.fromJson(json)).toList();
+        final List<dynamic> jsonList = json.decode(response.body);
+        return jsonList.map((json) => Post.fromJson(json)).toList();
       } else {
-        throw ApiException('Server error: ${response.statusCode}');
+        throw ApiException(
+          'Failed to load posts (status ${response.statusCode})',
+        );
       }
-    } on SocketException {
-      throw ApiException('No internet connection. Please check your network.');
-    } on TimeoutException {
-      throw ApiException('Request timed out. Please try again.');
+    } on ApiException {
+      rethrow;
     } catch (e) {
-      if (e is ApiException) rethrow;
-      throw ApiException('Something went wrong. Please try again.');
+      throw ApiException('Network error: Could not reach the server.');
     }
   }
 }
