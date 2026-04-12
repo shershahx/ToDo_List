@@ -1,19 +1,29 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:provider/provider.dart';
 import 'package:to_do_list/providers/counter_provider.dart';
 import 'package:to_do_list/providers/task_provider.dart';
 import 'package:to_do_list/screens/splash_screen.dart';
+import 'package:to_do_list/services/fcm_service.dart';
 import 'package:to_do_list/utils/colors.dart';
 import 'package:to_do_list/firebase_options.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await dotenv.load(fileName: ".env");
+
+  // Register the FCM background handler before Firebase init
+  FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+
+  // Initialise FCM (request permission, get token, listen for messages)
+  await FCMService().init();
+
   runApp(
     MultiProvider(
       providers: [

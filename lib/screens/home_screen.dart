@@ -8,6 +8,7 @@ import 'package:to_do_list/providers/task_provider.dart';
 import 'package:to_do_list/screens/counter_screen.dart';
 import 'package:to_do_list/screens/login_screen.dart';
 import 'package:to_do_list/screens/users_screen.dart';
+import 'package:to_do_list/screens/riverpod_demo_screen.dart';
 import 'package:to_do_list/utils/colors.dart';
 import 'package:to_do_list/utils/notification_service.dart';
 import 'package:to_do_list/utils/page_transitions.dart';
@@ -565,6 +566,16 @@ class _HomeScreenState extends State<HomeScreen>
             },
             icon: const Icon(Icons.speed_rounded, size: 22),
             tooltip: 'Counter',
+          ),
+          IconButton(
+            onPressed: () {
+              Navigator.push(
+                context,
+                FadeSlideRoute(page: const RiverpodDemoScreen()),
+              );
+            },
+            icon: const Icon(Icons.auto_awesome_rounded, size: 22),
+            tooltip: 'Riverpod Demo',
           ),
           IconButton(
             onPressed: () async {
