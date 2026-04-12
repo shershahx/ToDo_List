@@ -101,9 +101,11 @@ lib/
 │   ├── home_screen.dart           — To-do list with Provider, search, filters, swipe
 │   ├── counter_screen.dart        — Counter app (StatelessWidget + Provider)
 │   ├── users_screen.dart          — API users list from JSONPlaceholder
-│   └── user_detail_screen.dart    — User detail with posts from API
+│   ├── user_detail_screen.dart    — User detail with posts from API
+│   └── riverpod_demo_screen.dart  — Bonus standalone Riverpod demonstration screen
 ├── services/
-│   └── api_service.dart           — HTTP client for JSONPlaceholder API
+│   ├── api_service.dart           — HTTP client for JSONPlaceholder API
+│   └── fcm_service.dart           — Firebase Cloud Messaging handler
 └── utils/
     ├── colors.dart                — Centralized dark-mode color palette + category colors
     ├── validators.dart            — Reusable form validators
@@ -143,6 +145,8 @@ lib/
 | `flutter_secure_storage`      | Encrypted storage for tasks, session & counter   |
 | `shared_preferences`          | Lightweight local key-value persistence          |
 | `flutter_local_notifications` | Schedule and cancel due-date reminders           |
+| `firebase_messaging`          | Firebase Cloud Messaging for Push Notifications  |
+| `flutter_riverpod`            | Advanced state management for the Riverpod demo  |
 | `timezone`                    | Correct timezone handling for notifications      |
 | `intl`                        | Date/time formatting ("Today", "Tomorrow", …)    |
 | `cupertino_icons`             | iOS-style icons                                  |
@@ -193,3 +197,5 @@ lib/
 ## Bonus Challenges Completed
 - ✅ Splash screen with session-aware routing
 - ✅ Firebase integration (Google Sign-In via Firebase Auth)
+- ✅ Implement Push Notifications using Firebase Cloud Messaging (Week 6)
+- ✅ Explore advanced state management options (Riverpod) via a standalone demo (Week 6)

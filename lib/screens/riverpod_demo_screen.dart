@@ -28,7 +28,11 @@ class DemoTask {
 
 /// Task list managed by Riverpod (mirrors TaskProvider).
 class TaskListNotifier extends StateNotifier<List<DemoTask>> {
-  TaskListNotifier() : super([]);
+  TaskListNotifier() : super([
+    const DemoTask(title: 'Grab coffee beans from the local roaster', done: true),
+    const DemoTask(title: 'Reply to Sarah about the weekend trip'),
+    const DemoTask(title: 'Read chapter 4 of the design book'),
+  ]);
 
   void add(String title) =>
       state = [...state, DemoTask(title: title.trim())];
