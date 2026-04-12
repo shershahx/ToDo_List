@@ -1,7 +1,7 @@
-# Task Management App — Flutter Internship (Weeks 1–3)
+# Task Management App — Flutter Internship (Weeks 1–6)
 
 ## Overview
-A feature-rich task management application built with Flutter over a three-week internship. The app progresses from a polished login flow (Week 1) through persistent storage and state management (Week 2) to a fully refined task manager with search, filtering, categories, swipe gestures, Google Sign-In, and encrypted storage (Week 3).
+A feature-rich task management application built with Flutter over a six-week internship. The app progresses from a polished login flow (Week 1), through persistent storage and notifications (Week 2), to a fully refined task manager with search, filtering, categories, swipe gestures, Google Sign-In, and encrypted storage (Week 3). Weeks 4–5 add REST API integration and Firebase Auth + Firestore. Week 6 refactors state management to Provider and introduces bonus FCM push notifications and a Riverpod exploration demo.
 
 ## Screenshots
 
@@ -77,6 +77,8 @@ A feature-rich task management application built with Flutter over a three-week 
 - **CounterProvider:** Extracted counter logic into a dedicated provider; `CounterScreen` is now a fully stateless widget.
 - **Architecture Improvement:** Separated `TaskItem` model into its own file. Business logic is fully decoupled from the UI layer.
 - **Performance Optimization:** Only affected widgets rebuild on state changes, reducing unnecessary full-screen re-renders.
+- **🔔 FCM Push Notifications (Bonus):** Integrated Firebase Cloud Messaging — requests permission, retrieves the device token, displays foreground messages as local notification banners, and handles background/terminated-state notifications.
+- **⚡ Riverpod Exploration (Bonus):** Built a standalone demo screen showcasing `StateNotifierProvider` for counter and task list, plus derived providers — with an info banner comparing Riverpod to Provider.
 
 ## Demo Credentials
 
@@ -86,7 +88,7 @@ A feature-rich task management application built with Flutter over a three-week 
 
 ```
 lib/
-├── main.dart                      — App entry point, Firebase init, MultiProvider
+├── main.dart                      — App entry point, Firebase init, FCM setup, MultiProvider
 ├── models/
 │   ├── task_item.dart             — TaskItem data model (title, done, dueDate, category)
 │   ├── user.dart                  — User model for API data
@@ -121,16 +123,17 @@ lib/
 1. Install Flutter — [flutter.dev](https://flutter.dev)
 2. Clone the repository.
 3. Run `flutter pub get` to fetch dependencies.
-4. **Firebase setup** (required for Google Sign-In):
+4. **Firebase setup** (required for Google Sign-In & FCM):
    - Create a project at [console.firebase.google.com](https://console.firebase.google.com)
    - Register your Android app with package name `com.shershah.to_do_list`
    - Download `google-services.json` → place in `android/app/`
    - Enable **Google** as a sign-in provider under Authentication → Sign-in method
+   - Enable **Cloud Messaging** under Project Settings → Cloud Messaging
    - Add your SHA-1 key (run `cd android && ./gradlew signingReport`)
 5. Connect a device or start an emulator.
 6. Run `flutter run`.
 
-> **Android note:** The app requests notification permission at runtime (Android 13+). Allow it to receive due-date reminders.
+> **Android note:** The app requests notification permission at runtime (Android 13+). Allow it to receive due-date reminders and FCM push notifications.
 
 ## Key Packages
 
@@ -190,9 +193,11 @@ lib/
 - Refactor app state from `setState` to Provider (`ChangeNotifier`).
 - Apply state management best practices: separation of business logic from UI.
 - Optimize performance by minimizing unnecessary widget rebuilds.
+- Integrate Firebase Cloud Messaging for push notifications.
+- Explore advanced state management with Riverpod (`StateNotifierProvider`, derived providers).
 
 ## Deadline
-**11th April, 2026**
+**14th April, 2026**
 
 ## Bonus Challenges Completed
 - ✅ Splash screen with session-aware routing
