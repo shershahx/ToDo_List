@@ -51,13 +51,4 @@ app.*.map.json
 android/key.properties
 *.jks
 *.keystore
-
-# Project-specific exclusions
-context.md
-CONTEXT.md
-Flutter Development Interns Task.md
-Flutter development Internee's Task Phase 02.md
 .env
-week-6.md
-week-4.md
-week-5.md
