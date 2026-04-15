@@ -7,17 +7,22 @@ A feature-rich task management application built with Flutter over a six-week in
 
 <div align="center">
 
+## 📱 Development Progress: Weeks 1–6
+
+### Weeks 1–2 | UI, Navigation & State
 | Splash Screen | Login Screen | Sign Up Screen |
 | :---: | :---: | :---: |
-| ![Splash Screen](screenshots/Screenshot%20(1).jpg) | ![Login Screen](screenshots/Screenshot%20(2).jpg) | ![Sign Up Screen](screenshots/Screenshot%20(3).jpg) |
+| <img src="screenshots/Screenshot%20(1).jpg" width="250" /> | <img src="screenshots/Screenshot%20(2).jpg" width="250" /> | <img src="screenshots/Screenshot%20(3).jpg" width="250" /> |
 
+### Weeks 2–3 | To-Do List Core Features
 | Home (Empty) | Add Task (Empty) | Add Task (Data) |
 | :---: | :---: | :---: |
-| ![Empty State](screenshots/Screenshot%20(4).jpg) | ![Add Task Empty](screenshots/Screenshot%20(5).jpg) | ![Add Task Data](screenshots/Screenshot%20(6).jpg) |
+| <img src="screenshots/Screenshot%20(4).jpg" width="250" /> | <img src="screenshots/Screenshot%20(5).jpg" width="250" /> | <img src="screenshots/Screenshot%20(6).jpg" width="250" /> |
 
-| Home (With Tasks) |
-| :---: |
-| ![Home Screen](screenshots/Screenshot%20(7).jpg) |
+### Weeks 3–6 | Polish, REST API & Riverpod
+| Home (With Tasks) | Users List (API) | Riverpod Explorer Demo |
+| :---: | :---: | :---: |
+| <img src="screenshots/Screenshot%20(7).jpg" width="250" /> | <img src="screenshots/Screenshot%20(9).png" width="250" /> | <img src="screenshots/Screenshot%20(8).jpg" width="250" /> |
 
 </div>
 
