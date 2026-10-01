@@ -201,11 +201,3 @@ lib/
 - Integrate Firebase Cloud Messaging for push notifications.
 - Explore advanced state management with Riverpod (`StateNotifierProvider`, derived providers).
 
-## Deadline
-**14th April, 2026**
-
-## Bonus Challenges Completed
-- ✅ Splash screen with session-aware routing
-- ✅ Firebase integration (Google Sign-In via Firebase Auth)
-- ✅ Implement Push Notifications using Firebase Cloud Messaging (Week 6)
-- ✅ Explore advanced state management options (Riverpod) via a standalone demo (Week 6)
