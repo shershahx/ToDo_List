@@ -1,7 +1,7 @@
-# Task Management App — Flutter Internship (Weeks 1–6)
+# Task Management App — Flutter (Weeks 1–6)
 
 ## Overview
-A feature-rich task management application built with Flutter over a six-week internship. The app progresses from a polished login flow (Week 1), through persistent storage and notifications (Week 2), to a fully refined task manager with search, filtering, categories, swipe gestures, Google Sign-In, and encrypted storage (Week 3). Weeks 4–5 add REST API integration and Firebase Auth + Firestore. Week 6 refactors state management to Provider and introduces bonus FCM push notifications and a Riverpod exploration demo.
+A feature-rich task management application built with Flutter over a six-week duration. The app progresses from a polished login flow (Week 1), through persistent storage and notifications (Week 2), to a fully refined task manager with search, filtering, categories, swipe gestures, Google Sign-In, and encrypted storage (Week 3). Weeks 4–5 add REST API integration and Firebase Auth + Firestore. Week 6 refactors state management to Provider and introduces bonus FCM push notifications and a Riverpod exploration demo.
 
 ## Screenshots
 
